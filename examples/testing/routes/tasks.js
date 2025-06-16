@@ -5,8 +5,6 @@ module.exports = (app) => {
     .route("/tasks")
     .all(app.auth.authenticate())
     .get((req, res) => {
-      console.log(`User ID: ${req.user.id}`); // Debugging line to check user ID
-
       Tasks.findAll({
         where: {
           userId: req.user.id,
@@ -18,8 +16,6 @@ module.exports = (app) => {
         });
     })
     .post((req, res) => {
-      console.log(`Creating task for User ID: ${req.user.id}`); // Debugging line to check user ID
-
       req.body.userId = req.user.id;
       Tasks.create(req.body)
         .then((result) => res.json(result))
@@ -32,8 +28,6 @@ module.exports = (app) => {
     .route("/tasks/:id")
     .all(app.auth.authenticate())
     .get((req, res) => {
-      console.log(`User ID: ${req.user.id}`); // Debugging line to check user ID
-      console.log(`Task ID: ${req.params.id}`); // Debugging line to check task ID
       Tasks.findOne({
         where: {
           id: req.params.id,
@@ -58,13 +52,7 @@ module.exports = (app) => {
           userId: req.user.id,
         },
       })
-        .then((result) => {
-          if (result[0] === 1) {
-            res.json({ msg: "Task updated successfully" });
-          } else {
-            res.sendStatus(404);
-          }
-        })
+        .then(() => res.sendStatus(204))
         .catch((error) => {
           res.status(412).json({ msg: error.message });
         });
