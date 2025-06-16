@@ -2,6 +2,8 @@ const bodyParser = require("body-parser");
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
+const compression = require("compression");
+const helmet = require("helmet");
 const logger = require("./logger.js");
 
 module.exports = (app) => {
@@ -14,6 +16,7 @@ module.exports = (app) => {
       },
     })
   );
+  app.use(helmet());
   app.use(
     cors({
       origin: ["http://localhost:3000"],
@@ -21,6 +24,7 @@ module.exports = (app) => {
       allowedHeaders: ["Content-Type", "Authorization"],
     })
   );
+  app.use(compression());
   app.use(bodyParser.json());
   app.use(app.auth.initialize());
   app.use((req, res, next) => {
