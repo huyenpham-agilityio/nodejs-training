@@ -1,0 +1,41 @@
+{
+  "name": "testing",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm run apidoc &&node index.js",
+    "test": "NODE_ENV=test mocha tests/**/*.js",
+    "apidoc": "apidoc -i routes/ -o public/apidoc"
+  },
+  "apidoc": {
+    "name": "Node Task API - Documentation",
+    "template": {
+      "forceLanguage": "en"
+    }
+  },
+  "author": "Huyen Pham",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "body-parser": "^2.2.0",
+    "chai": "^4.5.0",
+    "compression": "^1.8.0",
+    "consign": "^0.1.6",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "jwt-simple": "^0.5.6",
+    "morgan": "^1.10.0",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "sequelize": "^6.37.7",
+    "sqlite3": "^5.1.7",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "apidoc": "^1.2.0",
+    "mocha": "^11.6.0",
+    "supertest": "^7.1.1"
+  }
+}

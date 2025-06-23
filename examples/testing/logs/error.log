@@ -1,0 +1,68 @@
+{"level":"info","message":"[Mon Jun 16 2025 17:56:52 GMT+0700 (Indochina Time)] Executing (default): SELECT name FROM sqlite_master WHERE type='table' AND name='users';"}
+{"level":"info","message":"[Mon Jun 16 2025 17:56:52 GMT+0700 (Indochina Time)] Executing (default): PRAGMA INDEX_LIST(`users`)"}
+{"level":"info","message":"[Mon Jun 16 2025 17:56:52 GMT+0700 (Indochina Time)] Executing (default): PRAGMA INDEX_INFO(`sqlite_autoindex_users_1`)"}
+{"level":"info","message":"[Mon Jun 16 2025 17:56:52 GMT+0700 (Indochina Time)] Executing (default): SELECT name FROM sqlite_master WHERE type='table' AND name='tasks';"}
+{"level":"info","message":"[Mon Jun 16 2025 17:56:52 GMT+0700 (Indochina Time)] Executing (default): PRAGMA INDEX_LIST(`tasks`)"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:05 +0000] \"GET / HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:08 +0000] \"GET / HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:09 +0000] \"GET / HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:09 +0000] \"GET / HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:09 +0000] \"GET / HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:09 +0000] \"GET / HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:09 +0000] \"GET / HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:09 +0000] \"GET / HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:10 +0000] \"GET / HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:10 +0000] \"GET / HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:10 +0000] \"GET / HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"[Mon Jun 16 2025 17:57:46 GMT+0700 (Indochina Time)] Executing (default): SELECT `id`, `name`, `email`, `password`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `users` AS `users` WHERE `users`.`id` = 321;"}
+{"level":"info","message":"[Mon Jun 16 2025 17:57:46 GMT+0700 (Indochina Time)] Executing (default): SELECT `id`, `title`, `done`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt`, `user_id` AS `userId` FROM `tasks` AS `tasks` WHERE `tasks`.`user_id` = 321;"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:46 +0000] \"GET /tasks/ HTTP/1.1\" 200 205\n"}
+{"level":"info","message":"[Mon Jun 16 2025 17:57:47 GMT+0700 (Indochina Time)] Executing (default): SELECT `id`, `name`, `email`, `password`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `users` AS `users` WHERE `users`.`id` = 321;"}
+{"level":"info","message":"[Mon Jun 16 2025 17:57:47 GMT+0700 (Indochina Time)] Executing (default): SELECT `id`, `title`, `done`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt`, `user_id` AS `userId` FROM `tasks` AS `tasks` WHERE `tasks`.`user_id` = 321;"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:47 +0000] \"GET /tasks/ HTTP/1.1\" 200 205\n"}
+{"level":"info","message":"[Mon Jun 16 2025 17:57:48 GMT+0700 (Indochina Time)] Executing (default): SELECT `id`, `name`, `email`, `password`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `users` AS `users` WHERE `users`.`id` = 321;"}
+{"level":"info","message":"[Mon Jun 16 2025 17:57:48 GMT+0700 (Indochina Time)] Executing (default): SELECT `id`, `title`, `done`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt`, `user_id` AS `userId` FROM `tasks` AS `tasks` WHERE `tasks`.`user_id` = 321;"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:48 +0000] \"GET /tasks/ HTTP/1.1\" 200 205\n"}
+{"level":"info","message":"[Mon Jun 16 2025 17:57:48 GMT+0700 (Indochina Time)] Executing (default): SELECT `id`, `name`, `email`, `password`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `users` AS `users` WHERE `users`.`id` = 321;"}
+{"level":"info","message":"[Mon Jun 16 2025 17:57:48 GMT+0700 (Indochina Time)] Executing (default): SELECT `id`, `title`, `done`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt`, `user_id` AS `userId` FROM `tasks` AS `tasks` WHERE `tasks`.`user_id` = 321;"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:48 +0000] \"GET /tasks/ HTTP/1.1\" 200 205\n"}
+{"level":"info","message":"[Mon Jun 16 2025 17:57:48 GMT+0700 (Indochina Time)] Executing (default): SELECT `id`, `name`, `email`, `password`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `users` AS `users` WHERE `users`.`id` = 321;"}
+{"level":"info","message":"[Mon Jun 16 2025 17:57:48 GMT+0700 (Indochina Time)] Executing (default): SELECT `id`, `title`, `done`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt`, `user_id` AS `userId` FROM `tasks` AS `tasks` WHERE `tasks`.`user_id` = 321;"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:48 +0000] \"GET /tasks/ HTTP/1.1\" 200 205\n"}
+{"level":"info","message":"[Mon Jun 16 2025 17:57:49 GMT+0700 (Indochina Time)] Executing (default): SELECT `id`, `name`, `email`, `password`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `users` AS `users` WHERE `users`.`id` = 321;"}
+{"level":"info","message":"[Mon Jun 16 2025 17:57:49 GMT+0700 (Indochina Time)] Executing (default): SELECT `id`, `title`, `done`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt`, `user_id` AS `userId` FROM `tasks` AS `tasks` WHERE `tasks`.`user_id` = 321;"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:49 +0000] \"GET /tasks/ HTTP/1.1\" 200 205\n"}
+{"level":"info","message":"[Mon Jun 16 2025 17:57:49 GMT+0700 (Indochina Time)] Executing (default): SELECT `id`, `name`, `email`, `password`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `users` AS `users` WHERE `users`.`id` = 321;"}
+{"level":"info","message":"[Mon Jun 16 2025 17:57:49 GMT+0700 (Indochina Time)] Executing (default): SELECT `id`, `title`, `done`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt`, `user_id` AS `userId` FROM `tasks` AS `tasks` WHERE `tasks`.`user_id` = 321;"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:49 +0000] \"GET /tasks/ HTTP/1.1\" 200 205\n"}
+{"level":"info","message":"[Mon Jun 16 2025 17:57:49 GMT+0700 (Indochina Time)] Executing (default): SELECT `id`, `name`, `email`, `password`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `users` AS `users` WHERE `users`.`id` = 321;"}
+{"level":"info","message":"[Mon Jun 16 2025 17:57:49 GMT+0700 (Indochina Time)] Executing (default): SELECT `id`, `title`, `done`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt`, `user_id` AS `userId` FROM `tasks` AS `tasks` WHERE `tasks`.`user_id` = 321;"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:49 +0000] \"GET /tasks/ HTTP/1.1\" 200 205\n"}
+{"level":"info","message":"[Mon Jun 16 2025 17:57:50 GMT+0700 (Indochina Time)] Executing (default): SELECT `id`, `name`, `email`, `password`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `users` AS `users` WHERE `users`.`id` = 321;"}
+{"level":"info","message":"[Mon Jun 16 2025 17:57:50 GMT+0700 (Indochina Time)] Executing (default): SELECT `id`, `title`, `done`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt`, `user_id` AS `userId` FROM `tasks` AS `tasks` WHERE `tasks`.`user_id` = 321;"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:57:50 +0000] \"GET /tasks/ HTTP/1.1\" 200 205\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:19 +0000] \"GET /apidoc/ HTTP/1.1\" 200 44529\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:19 +0000] \"GET /apidoc/assets/prism-toolbar.css?v=1750071412098 HTTP/1.1\" 200 1565\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:19 +0000] \"GET /apidoc/assets/prism-diff-highlight.css?v=1750071412098 HTTP/1.1\" 200 379\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:19 +0000] \"GET /apidoc/assets/prism.css?v=1750071412098 HTTP/1.1\" 200 1766\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:19 +0000] \"GET /apidoc/assets/bootstrap.min.css?v=1750071412098 HTTP/1.1\" 200 121457\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:19 +0000] \"GET /apidoc/assets/main.css?v=1750071412098 HTTP/1.1\" 200 12019\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:19 +0000] \"GET /apidoc/assets/main.bundle.js?v=1750071412098 HTTP/1.1\" 200 414784\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:19 +0000] \"GET /apidoc/assets/favicon.ico?v=1750071412098 HTTP/1.1\" 200 24838\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:22 +0000] \"GET /apidoc/assets/bootstrap.min.css?v=1750071412098 HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:22 +0000] \"GET /apidoc/assets/prism-toolbar.css?v=1750071412098 HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:22 +0000] \"GET /apidoc/assets/prism-diff-highlight.css?v=1750071412098 HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:22 +0000] \"GET /apidoc/assets/prism.css?v=1750071412098 HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:22 +0000] \"GET /apidoc/assets/main.css?v=1750071412098 HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:22 +0000] \"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1\" 404 187\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:22 +0000] \"GET /apidoc/assets/bootstrap.min.css.map HTTP/1.1\" 200 540434\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:27 +0000] \"GET /apidoc/ HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:27 +0000] \"GET /apidoc/assets/bootstrap.min.css?v=1750071412098 HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:27 +0000] \"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1\" 404 187\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:27 +0000] \"GET /apidoc/assets/prism.css?v=1750071412098 HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:27 +0000] \"GET /apidoc/assets/prism-toolbar.css?v=1750071412098 HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:27 +0000] \"GET /apidoc/assets/prism-diff-highlight.css?v=1750071412098 HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:27 +0000] \"GET /apidoc/assets/main.css?v=1750071412098 HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:27 +0000] \"GET /apidoc/assets/main.bundle.js?v=1750071412098 HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:27 +0000] \"GET /apidoc/assets/bootstrap.min.css.map HTTP/1.1\" 304 -\n"}
+{"level":"info","message":"::1 - - [16/Jun/2025:10:59:27 +0000] \"GET /apidoc/assets/favicon.ico?v=1750071412098 HTTP/1.1\" 304 -\n"}
