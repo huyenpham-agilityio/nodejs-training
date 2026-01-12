@@ -22,10 +22,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bullmq": "^5.66.5",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "helmet": "^7.1.0"
+    "helmet": "^7.1.0",
+    "ioredis": "^5.9.1",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.28"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.3.1",
