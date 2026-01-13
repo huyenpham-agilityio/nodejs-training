@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import 'reflect-metadata';
+import { HTTP_STATUS_CODES } from '@/constants/http';
 
 dotenv.config();
 
@@ -25,19 +26,18 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health check endpoint
 app.get('/health', (_req: Request, res: Response) => {
-  res.status(200).json({
+  res.status(HTTP_STATUS_CODES.OK).json({
     status: 'success',
     message: 'Server is healthy',
     timestamp: new Date().toISOString(),
   });
 });
 
-// API routes
-// TODO: Add your routes here
+// TODO: Add all routes here
 
 // 404 handler
 app.use((_req: Request, res: Response) => {
-  res.status(404).json({
+  res.status(HTTP_STATUS_CODES.NOT_FOUND).json({
     status: 'error',
     message: 'Route not found',
   });
