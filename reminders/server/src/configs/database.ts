@@ -1,9 +1,6 @@
 import { DataSource } from 'typeorm';
-import dotenv from 'dotenv';
 import { User } from '@/modules/users/entities/User.entity';
 import { Reminder } from '@/modules/reminders/entities/Reminder.entity';
-
-dotenv.config();
 
 const isDevelopment = process.env.NODE_ENV === 'production';
 

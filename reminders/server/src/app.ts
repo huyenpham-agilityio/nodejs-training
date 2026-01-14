@@ -1,11 +1,8 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
 import 'reflect-metadata';
 import { HTTP_STATUS_CODES } from '@/constants/http';
-
-dotenv.config();
 
 const app: Application = express();
 
