@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import { requireAuth } from '@/modules/auth/auth.middleware';
-import * as reminderController from './reminder.controller';
+import { ReminderController } from './reminder.controller';
 
 const router = Router();
+const reminderController = new ReminderController();
 
 // All reminder routes require authentication
 router.use(requireAuth);

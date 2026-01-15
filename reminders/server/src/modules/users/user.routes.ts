@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import { requireAuth } from '@/modules/auth/auth.middleware';
-import * as userController from './user.controller';
+import { UserController } from './user.controller';
 
 const router = Router();
+const userController = new UserController();
 
 // All user routes require authentication
 router.use(requireAuth);
