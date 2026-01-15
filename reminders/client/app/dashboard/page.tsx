@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { UserButton } from "@clerk/nextjs";
+import { useEffect, useState, useCallback } from "react";
+import { useAuth, UserButton } from "@clerk/nextjs";
 import ReminderModal from "@/components/ReminderModal";
 import StatsCards from "@/components/StatsCards";
 import ReminderFilters from "@/components/ReminderFilters";
@@ -60,9 +60,34 @@ export default function DashboardPage() {
     deleteReminder,
     toggleComplete,
   } = useReminders({ initialReminders });
+  const { getToken, isLoaded, isSignedIn } = useAuth();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
+
+  const fetchExternalData = useCallback(async () => {
+    const token = await getToken();
+
+    // Fetch data from an external API
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/users/me`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return response.json();
+  }, [getToken]);
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      fetchExternalData().then((data) => {
+        console.log("Fetched external data:", data);
+      });
+    }
+  }, [fetchExternalData, isLoaded, isSignedIn]);
 
   const handleCreate = () => {
     setEditingReminder(null);
