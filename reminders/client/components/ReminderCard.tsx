@@ -4,7 +4,7 @@ interface Reminder {
   id: number;
   title: string;
   description?: string;
-  reminder_time: string;
+  scheduled_at: string;
   is_completed: boolean;
 }
 
@@ -12,7 +12,7 @@ interface ReminderCardProps {
   reminder: Reminder;
   onEdit: (reminder: Reminder) => void;
   onDelete: (id: number) => void;
-  onToggleComplete: (id: number, isCompleted: boolean) => void;
+  onToggleComplete: (id: number) => void;
 }
 
 export default function ReminderCard({
@@ -21,7 +21,7 @@ export default function ReminderCard({
   onDelete,
   onToggleComplete,
 }: ReminderCardProps) {
-  const reminderDate = new Date(reminder.reminder_time);
+  const reminderDate = new Date(reminder.scheduled_at);
   const now = new Date();
   const isOverdue = reminderDate < now && !reminder.is_completed;
 
@@ -58,7 +58,7 @@ export default function ReminderCard({
             <input
               type='checkbox'
               checked={reminder.is_completed}
-              onChange={(e) => onToggleComplete(reminder.id, e.target.checked)}
+              onChange={() => onToggleComplete(reminder.id)}
               className='peer w-6 h-6 appearance-none border-2 border-gray-600 bg-gray-900 rounded-lg cursor-pointer transition-all duration-200 checked:border-indigo-500 checked:bg-indigo-600 hover:border-indigo-400 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900'
             />
             {/* Checkmark Icon */}

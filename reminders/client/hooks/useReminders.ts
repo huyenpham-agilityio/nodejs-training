@@ -1,21 +1,56 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { reminderApi, CreateReminderData } from "@/lib/api";
 
 interface Reminder {
   id: number;
   title: string;
   description?: string;
-  reminder_time: string;
+  scheduled_at: string;
+  status?: string;
   is_completed: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface UseRemindersProps {
-  initialReminders: Reminder[];
+  initialReminders?: Reminder[];
 }
 
-export function useReminders({ initialReminders }: UseRemindersProps) {
+export function useReminders({
+  initialReminders = [],
+}: UseRemindersProps = {}) {
+  const { getToken } = useAuth();
   const [reminders, setReminders] = useState<Reminder[]>(initialReminders);
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch reminders from API
+  const fetchReminders = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const token = await getToken();
+      if (!token) return;
+
+      const data = await reminderApi.getAll(token);
+      setReminders(data);
+    } catch (err) {
+      console.error("Error fetching reminders:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch reminders"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getToken]);
+
+  // Fetch reminders on mount
+  useEffect(() => {
+    fetchReminders();
+  }, [fetchReminders]);
 
   // Filter and sort reminders
   const sortedReminders = useMemo(() => {
@@ -43,8 +78,8 @@ export function useReminders({ initialReminders }: UseRemindersProps) {
         }
         // Sort by date (earliest first)
         return (
-          new Date(a.reminder_time).getTime() -
-          new Date(b.reminder_time).getTime()
+          new Date(a.scheduled_at).getTime() -
+          new Date(b.scheduled_at).getTime()
         );
       });
   }, [reminders, filter, searchQuery]);
@@ -56,42 +91,95 @@ export function useReminders({ initialReminders }: UseRemindersProps) {
       active: reminders.filter((r) => !r.is_completed).length,
       completed: reminders.filter((r) => r.is_completed).length,
       overdue: reminders.filter(
-        (r) => !r.is_completed && new Date(r.reminder_time) < new Date()
+        (r) => !r.is_completed && new Date(r.scheduled_at) < new Date()
       ).length,
     };
   }, [reminders]);
 
   // Handlers
-  const createReminder = (
-    reminderData: Omit<Reminder, "id" | "is_completed">
+  const createReminder = async (
+    reminderData: Omit<
+      Reminder,
+      "id" | "is_completed" | "status" | "created_at" | "updated_at"
+    >
   ) => {
-    const newReminder: Reminder = {
-      id: Math.max(...reminders.map((r) => r.id), 0) + 1,
-      ...reminderData,
-      is_completed: false,
-    };
-    setReminders([...reminders, newReminder]);
+    try {
+      setError(null);
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
+
+      const newReminder = await reminderApi.create(
+        token,
+        reminderData as CreateReminderData
+      );
+      setReminders([...reminders, newReminder]);
+      return newReminder;
+    } catch (err) {
+      console.error("Error creating reminder:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to create reminder"
+      );
+      throw err;
+    }
   };
 
-  const updateReminder = (
+  const updateReminder = async (
     id: number,
-    reminderData: Omit<Reminder, "id" | "is_completed">
+    reminderData: Omit<
+      Reminder,
+      "id" | "is_completed" | "status" | "created_at" | "updated_at"
+    >
   ) => {
-    setReminders(
-      reminders.map((r) => (r.id === id ? { ...r, ...reminderData } : r))
-    );
+    try {
+      setError(null);
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
+
+      const updated = await reminderApi.update(token, id, reminderData);
+      setReminders(reminders.map((r) => (r.id === id ? updated : r)));
+      return updated;
+    } catch (err) {
+      console.error("Error updating reminder:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to update reminder"
+      );
+      throw err;
+    }
   };
 
-  const deleteReminder = (id: number) => {
-    setReminders(reminders.filter((r) => r.id !== id));
+  const deleteReminder = async (id: number) => {
+    try {
+      setError(null);
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
+
+      await reminderApi.delete(token, id);
+      setReminders(reminders.filter((r) => r.id !== id));
+    } catch (err) {
+      console.error("Error deleting reminder:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to delete reminder"
+      );
+      throw err;
+    }
   };
 
-  const toggleComplete = (id: number, isCompleted: boolean) => {
-    setReminders(
-      reminders.map((r) =>
-        r.id === id ? { ...r, is_completed: isCompleted } : r
-      )
-    );
+  const toggleComplete = async (id: number) => {
+    try {
+      setError(null);
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
+
+      const updated = await reminderApi.toggleComplete(token, id);
+      setReminders(reminders.map((r) => (r.id === id ? updated : r)));
+      return updated;
+    } catch (err) {
+      console.error("Error toggling reminder:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to toggle reminder"
+      );
+      throw err;
+    }
   };
 
   return {
@@ -106,5 +194,8 @@ export function useReminders({ initialReminders }: UseRemindersProps) {
     updateReminder,
     deleteReminder,
     toggleComplete,
+    isLoading,
+    error,
+    refetch: fetchReminders,
   };
 }

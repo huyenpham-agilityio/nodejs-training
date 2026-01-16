@@ -1,14 +1,42 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 interface Reminder {
   id?: number;
   title: string;
   description?: string;
-  reminder_time: string;
+  scheduled_at: string;
   is_completed?: boolean;
 }
+
+// Zod validation schema
+const reminderSchema = z.object({
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .max(100, "Title must be less than 100 characters"),
+  description: z
+    .string()
+    .max(500, "Description must be less than 500 characters")
+    .optional()
+    .or(z.literal("")),
+  scheduled_at: z
+    .string()
+    .min(1, "Date and time is required")
+    .refine(
+      (date) => {
+        const selectedDate = new Date(date);
+        return selectedDate > new Date();
+      },
+      { message: "Reminder must be scheduled in the future" }
+    ),
+});
+
+type ReminderFormData = z.infer<typeof reminderSchema>;
 
 interface ReminderModalProps {
   isOpen: boolean;
@@ -23,41 +51,55 @@ export default function ReminderModal({
   onSave,
   reminder,
 }: ReminderModalProps) {
-  // Initialize state from props - this avoids the useEffect pattern
-  const [currentReminder, setCurrentReminder] = useState(reminder);
-
-  const [reminderTime, setReminderTime] = useState(() => {
-    if (reminder?.reminder_time) {
-      const date = new Date(reminder.reminder_time);
-      return date.toISOString().slice(0, 16);
-    }
-    return "";
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<ReminderFormData>({
+    resolver: zodResolver(reminderSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      scheduled_at: "",
+    },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Reset form when reminder changes (edit mode) or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      if (reminder) {
+        const date = new Date(reminder.scheduled_at);
+        reset({
+          title: reminder.title,
+          description: reminder.description || "",
+          scheduled_at: date.toISOString().slice(0, 16),
+        });
+      } else {
+        reset({
+          title: "",
+          description: "",
+          scheduled_at: "",
+        });
+      }
+    }
+  }, [reminder, reset, isOpen]);
 
-    // Don't save if title is empty
-    if (!currentReminder) return;
-
+  const onSubmit = (data: ReminderFormData) => {
     onSave({
-      title: currentReminder.title.trim(),
-      description: currentReminder.description?.trim() || undefined,
-      reminder_time: new Date(reminderTime).toISOString(),
+      title: data.title.trim(),
+      description: data.description?.trim() || undefined,
+      scheduled_at: new Date(data.scheduled_at).toISOString(),
     });
 
+    reset();
     onClose();
   };
 
   const handleClose = () => {
-    // Reset form on close
-    setCurrentReminder(reminder);
+    reset();
     onClose();
   };
-
-  useEffect(() => {
-    setCurrentReminder(reminder);
-  }, [reminder]);
 
   if (!isOpen) return null;
 
@@ -101,7 +143,7 @@ export default function ReminderModal({
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className='space-y-4'>
+          <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
             {/* Title */}
             <div>
               <label
@@ -113,21 +155,15 @@ export default function ReminderModal({
               <input
                 type='text'
                 id='title'
-                value={currentReminder?.title || ""}
-                onChange={(e) =>
-                  setCurrentReminder((prev) =>
-                    prev
-                      ? {
-                          ...prev,
-                          title: e.target.value,
-                        }
-                      : null
-                  )
-                }
+                {...register("title")}
                 className='w-full px-4 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-500'
                 placeholder='Enter reminder title'
-                required
               />
+              {errors.title && (
+                <p className='text-red-400 text-sm mt-1'>
+                  {errors.title.message}
+                </p>
+              )}
             </div>
 
             {/* Description */}
@@ -140,21 +176,16 @@ export default function ReminderModal({
               </label>
               <textarea
                 id='description'
-                value={currentReminder?.description || ""}
-                onChange={(e) =>
-                  setCurrentReminder((prev) =>
-                    prev
-                      ? {
-                          ...prev,
-                          description: e.target.value,
-                        }
-                      : null
-                  )
-                }
+                {...register("description")}
                 rows={3}
                 className='w-full px-4 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-500'
                 placeholder='Add more details (optional)'
               />
+              {errors.description && (
+                <p className='text-red-400 text-sm mt-1'>
+                  {errors.description.message}
+                </p>
+              )}
             </div>
 
             {/* Date & Time */}
@@ -168,11 +199,14 @@ export default function ReminderModal({
               <input
                 type='datetime-local'
                 id='reminderTime'
-                value={reminderTime}
-                onChange={(e) => setReminderTime(e.target.value)}
+                {...register("scheduled_at")}
                 className='w-full px-4 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent scheme-dark'
-                required
               />
+              {errors.scheduled_at && (
+                <p className='text-red-400 text-sm mt-1'>
+                  {errors.scheduled_at.message}
+                </p>
+              )}
             </div>
 
             {/* Actions */}
@@ -186,9 +220,10 @@ export default function ReminderModal({
               </button>
               <button
                 type='submit'
-                className='flex-1 px-4 py-2 bg-linear-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 font-medium transition-all shadow-lg shadow-indigo-500/50'
+                disabled={isSubmitting}
+                className='flex-1 px-4 py-2 bg-linear-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 font-medium transition-all shadow-lg shadow-indigo-500/50 disabled:opacity-50 disabled:cursor-not-allowed'
               >
-                {reminder ? "Update" : "Create"}
+                {isSubmitting ? "Saving..." : reminder ? "Update" : "Create"}
               </button>
             </div>
           </form>
