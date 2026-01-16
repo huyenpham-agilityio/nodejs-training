@@ -1,0 +1,69 @@
+import { UserRepository } from './user.repository';
+import { User } from './entities/User.entity';
+import { clerkClient } from '@clerk/express';
+
+/**
+ * User Service
+ * Business logic for user operations
+ */
+export class UserService {
+  private userRepository: UserRepository;
+
+  constructor(userRepository: UserRepository) {
+    this.userRepository = userRepository;
+  }
+  /**
+   * Find or create user by Clerk ID
+   * This is called when a user accesses the app to ensure they exist in the database
+   */
+  async findOrCreateByClerkId(clerkUserId: string): Promise<User> {
+    // First check if user exists in our database
+    let user = await this.userRepository.findByClerkUserId(clerkUserId);
+
+    if (user) {
+      return user;
+    }
+
+    // User doesn't exist, fetch from Clerk and create
+    try {
+      const clerkUser = await clerkClient.users.getUser(clerkUserId);
+
+      user = await this.userRepository.create({
+        clerk_user_id: clerkUserId,
+        email: clerkUser.emailAddresses[0]?.emailAddress || '',
+        name: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'User',
+      });
+
+      return user;
+    } catch (error) {
+      console.error('Error fetching user from Clerk:', error);
+      throw new Error('Failed to fetch user information');
+    }
+  }
+
+  /**
+   * Get user by Clerk ID
+   */
+  async findByClerkId(clerkUserId: string): Promise<User | null> {
+    return this.userRepository.findByClerkUserId(clerkUserId);
+  }
+
+  /**
+   * Update user profile
+   */
+  async update(clerkUserId: string, userData: Partial<User>): Promise<User> {
+    const user = await this.userRepository.findByClerkUserId(clerkUserId);
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const updated = await this.userRepository.update(user.id, userData);
+
+    if (!updated) {
+      throw new Error('Failed to update user');
+    }
+
+    return updated;
+  }
+}

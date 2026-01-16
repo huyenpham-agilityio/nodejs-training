@@ -2,7 +2,7 @@ import { DataSource } from 'typeorm';
 import { User } from '@/modules/users/entities/User.entity';
 import { Reminder } from '@/modules/reminders/entities/Reminder.entity';
 
-const isDevelopment = process.env.NODE_ENV === 'production';
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
 // Create and export the DataSource instance
 const AppDataSource = new DataSource({
