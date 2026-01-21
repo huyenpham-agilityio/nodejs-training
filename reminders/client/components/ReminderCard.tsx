@@ -5,7 +5,7 @@ interface Reminder {
   title: string;
   description?: string;
   scheduled_at: string;
-  is_completed: boolean;
+  status?: string;
 }
 
 interface ReminderCardProps {
@@ -23,7 +23,8 @@ export default function ReminderCard({
 }: ReminderCardProps) {
   const reminderDate = new Date(reminder.scheduled_at);
   const now = new Date();
-  const isOverdue = reminderDate < now && !reminder.is_completed;
+  const isCancelled = reminder.status == "cancelled";
+  const isCompleted = reminder.status === "notified";
 
   // Format date
   const formatDate = (date: Date) => {
@@ -39,15 +40,15 @@ export default function ReminderCard({
   return (
     <div
       className={`group relative bg-linear-to-br from-gray-800 to-gray-900 rounded-xl shadow-lg border border-gray-700 p-6 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/20 hover:scale-[1.02] hover:-translate-y-1 hover:border-indigo-500/50 ${
-        reminder.is_completed ? "opacity-60" : ""
+        isCompleted ? "opacity-60" : ""
       } ${
-        isOverdue
+        isCancelled
           ? "border-l-4 border-red-500 bg-linear-to-br from-red-950/50 to-gray-900"
           : ""
       }`}
     >
       {/* Gradient accent line at top */}
-      {!isOverdue && (
+      {!isCancelled && (
         <div className='absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-t-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
       )}
 
@@ -57,7 +58,7 @@ export default function ReminderCard({
           <div className='relative flex items-center justify-center mt-1'>
             <input
               type='checkbox'
-              checked={reminder.is_completed}
+              checked={isCompleted}
               onChange={() => onToggleComplete(reminder.id)}
               className='peer w-6 h-6 appearance-none border-2 border-gray-600 bg-gray-900 rounded-lg cursor-pointer transition-all duration-200 checked:border-indigo-500 checked:bg-indigo-600 hover:border-indigo-400 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900'
             />
@@ -81,11 +82,11 @@ export default function ReminderCard({
             {/* Title */}
             <h3
               className={`text-xl font-bold mb-2 transition-all duration-200 ${
-                reminder.is_completed
+                isCompleted
                   ? "line-through text-gray-500"
-                  : isOverdue
-                  ? "text-white"
-                  : "text-gray-100 group-hover:text-indigo-400"
+                  : isCancelled
+                    ? "text-white"
+                    : "text-gray-100 group-hover:text-indigo-400"
               }`}
             >
               {reminder.title}
@@ -95,7 +96,7 @@ export default function ReminderCard({
             {reminder.description && (
               <p
                 className={`text-gray-400 mt-2 text-sm leading-relaxed line-clamp-2 ${
-                  reminder.is_completed ? "text-gray-600" : ""
+                  isCompleted ? "text-gray-600" : ""
                 }`}
               >
                 {reminder.description}
@@ -106,11 +107,11 @@ export default function ReminderCard({
             <div className='flex items-center gap-2 mt-4 flex-wrap'>
               <div
                 className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium ${
-                  isOverdue
+                  isCancelled
                     ? "bg-red-900/50 text-red-300 border border-red-800"
-                    : reminder.is_completed
-                    ? "bg-gray-800 text-gray-400 border border-gray-700"
-                    : "bg-indigo-900/50 text-indigo-300 border border-indigo-800"
+                    : isCompleted
+                      ? "bg-gray-800 text-gray-400 border border-gray-700"
+                      : "bg-indigo-900/50 text-indigo-300 border border-indigo-800"
                 }`}
               >
                 <svg
@@ -129,7 +130,7 @@ export default function ReminderCard({
                 <span>{formatDate(reminderDate)}</span>
               </div>
 
-              {isOverdue && (
+              {isCancelled && (
                 <span className='inline-flex items-center gap-1.5 text-xs bg-linear-to-r from-red-500 to-red-600 text-white px-3 py-1.5 rounded-lg font-semibold shadow-sm'>
                   <svg
                     className='w-3.5 h-3.5'
@@ -142,11 +143,11 @@ export default function ReminderCard({
                       clipRule='evenodd'
                     />
                   </svg>
-                  Overdue
+                  Cancelled
                 </span>
               )}
 
-              {reminder.is_completed && (
+              {isCompleted && (
                 <span className='inline-flex items-center gap-1.5 text-xs bg-linear-to-r from-green-500 to-emerald-600 text-white px-3 py-1.5 rounded-lg font-semibold shadow-sm'>
                   <svg
                     className='w-3.5 h-3.5'

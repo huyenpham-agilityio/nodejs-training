@@ -3,6 +3,8 @@ import 'reflect-metadata';
 import app from './app';
 import AppDataSource from './configs/database';
 import { redisClient } from './configs/redis';
+// Import worker to initialize it
+import { notificationWorker } from './modules/notifications/workers/notification.worker';
 
 // Load environment variables
 dotenv.config();
@@ -49,6 +51,10 @@ const gracefulShutdown = async () => {
   console.log('\nShutting down gracefully...');
 
   try {
+    // Close the worker first
+    await notificationWorker.close();
+    console.log('✓ Notification worker closed');
+
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy();
       console.log('✓ Database connection closed');

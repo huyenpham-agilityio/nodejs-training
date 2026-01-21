@@ -1,7 +1,8 @@
 import { ReminderRepository } from './reminder.repository';
 import { Reminder, ReminderStatus } from './entities/Reminder.entity';
-import userRepository from '@/modules/users/user.repository';
+import { userRepository } from '@/modules/users/user.repository';
 import { clerkClient } from '@clerk/express';
+import { scheduleNotificationJob } from '@/configs/queue';
 
 export interface CreateReminderDTO {
   title: string;
@@ -14,7 +15,6 @@ export interface UpdateReminderDTO {
   description?: string;
   scheduled_at?: Date | string;
   status?: ReminderStatus;
-  is_completed?: boolean;
 }
 
 /**
@@ -38,8 +38,8 @@ export class ReminderService {
    * Get a specific reminder by ID
    * Throws error if not found or doesn't belong to user
    */
-  async findById(id: number, userId: string): Promise<Reminder> {
-    const reminder = await this.reminderRepository.findByIdAndUserId(id, userId);
+  async findById(id: number): Promise<Reminder> {
+    const reminder = await this.reminderRepository.findByIdWithUser(id);
 
     if (!reminder) {
       throw new Error('Reminder not found or access denied');
@@ -72,11 +72,13 @@ export class ReminderService {
       name: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'User',
     });
 
-    // Convert scheduled_at to Date if it's a string
-    const scheduledAt =
-      typeof reminderData.scheduled_at === 'string'
-        ? new Date(reminderData.scheduled_at)
-        : reminderData.scheduled_at;
+    // Validate scheduled time is in the future
+    const scheduledAt = new Date(reminderData.scheduled_at);
+    const now = new Date();
+
+    if (scheduledAt <= now) {
+      throw new Error('scheduled_at must be a future date and time');
+    }
 
     // Create reminder
     const reminder = await this.reminderRepository.create({
@@ -84,9 +86,18 @@ export class ReminderService {
       description: reminderData.description || '',
       scheduled_at: scheduledAt,
       status: ReminderStatus.PENDING,
-      is_completed: false,
       user: user,
     });
+
+    await scheduleNotificationJob(
+      {
+        reminder_id: reminder.id,
+        user_id: user.id,
+        title: reminder.title,
+        scheduled_at: reminder.scheduled_at,
+      },
+      reminder.scheduled_at
+    );
 
     return reminder;
   }
@@ -94,9 +105,9 @@ export class ReminderService {
   /**
    * Update a reminder
    */
-  async update(id: number, userId: string, reminderData: UpdateReminderDTO): Promise<Reminder> {
+  async update(id: number, reminderData: UpdateReminderDTO): Promise<Reminder> {
     // Verify ownership
-    const existing = await this.findById(id, userId);
+    const existing = await this.findById(id);
 
     if (!existing) {
       throw new Error('Reminder not found or access denied');
@@ -124,14 +135,6 @@ export class ReminderService {
       updateData.status = reminderData.status;
     }
 
-    if (reminderData.is_completed !== undefined) {
-      updateData.is_completed = reminderData.is_completed;
-      // Auto-update status based on completion
-      updateData.status = reminderData.is_completed
-        ? ReminderStatus.COMPLETED
-        : ReminderStatus.PENDING;
-    }
-
     // Update reminder
     const updated = await this.reminderRepository.update(id, updateData);
 
@@ -145,9 +148,9 @@ export class ReminderService {
   /**
    * Delete a reminder
    */
-  async delete(id: number, userId: string): Promise<void> {
+  async delete(id: number): Promise<void> {
     // Verify ownership
-    await this.findById(id, userId);
+    await this.findById(id);
 
     const deleted = await this.reminderRepository.delete(id);
 
@@ -157,29 +160,13 @@ export class ReminderService {
   }
 
   /**
-   * Toggle completion status
-   */
-  async toggleComplete(id: number, userId: string): Promise<Reminder> {
-    // Verify ownership
-    await this.findById(id, userId);
-
-    const reminder = await this.reminderRepository.toggleComplete(id);
-
-    if (!reminder) {
-      throw new Error('Failed to toggle reminder completion');
-    }
-
-    return reminder;
-  }
-
-  /**
    * Get statistics for a user
    */
   async getStats(userId: string): Promise<{
     total: number;
     active: number;
     completed: number;
-    overdue: number;
+    cancelled: number;
   }> {
     return this.reminderRepository.getStatsByUserId(userId);
   }

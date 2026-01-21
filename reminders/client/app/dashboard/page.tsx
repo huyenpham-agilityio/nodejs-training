@@ -14,7 +14,7 @@ interface Reminder {
   title: string;
   description?: string;
   scheduled_at: string;
-  is_completed: boolean;
+  status?: string;
 }
 
 export default function DashboardPage() {
@@ -67,9 +67,7 @@ export default function DashboardPage() {
     setIsModalOpen(true);
   };
 
-  const handleSave = async (
-    reminderData: Omit<Reminder, "id" | "is_completed">
-  ) => {
+  const handleSave = async (reminderData: Omit<Reminder, "id" | "status">) => {
     try {
       if (editingReminder) {
         await updateReminder(editingReminder.id, reminderData);

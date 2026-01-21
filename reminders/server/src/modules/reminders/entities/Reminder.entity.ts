@@ -13,8 +13,7 @@ import { User } from '@/modules/users/entities/User.entity';
 export enum ReminderStatus {
   PENDING = 'pending',
   NOTIFIED = 'notified',
-  CANCELED = 'canceled',
-  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
 }
 
 @Entity('reminders')
@@ -37,9 +36,6 @@ export class Reminder {
     default: ReminderStatus.PENDING,
   })
   status: ReminderStatus;
-
-  @Column({ default: false })
-  is_completed: boolean;
 
   @CreateDateColumn()
   created_at: Date;

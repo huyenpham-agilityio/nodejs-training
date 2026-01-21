@@ -8,7 +8,6 @@ interface Reminder {
   description?: string;
   scheduled_at: string;
   status?: string;
-  is_completed: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -26,6 +25,9 @@ export function useReminders({
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<{
+    total: number;
+  }>({ total: 0 });
 
   // Fetch reminders from API
   const fetchReminders = useCallback(async () => {
@@ -37,10 +39,13 @@ export function useReminders({
 
       const data = await reminderApi.getAll(token);
       setReminders(data);
+
+      const currentStats = await reminderApi.getStats(token);
+      setStats(currentStats);
     } catch (err) {
       console.error("Error fetching reminders:", err);
       setError(
-        err instanceof Error ? err.message : "Failed to fetch reminders"
+        err instanceof Error ? err.message : "Failed to fetch reminders",
       );
     } finally {
       setIsLoading(false);
@@ -57,8 +62,12 @@ export function useReminders({
     return reminders
       .filter((reminder) => {
         // Filter by status
-        if (filter === "active" && reminder.is_completed) return false;
-        if (filter === "completed" && !reminder.is_completed) return false;
+        if (filter === "active" && reminder.status === "notified") {
+          return false;
+        }
+        if (filter === "completed" && reminder.status !== "notified") {
+          return false;
+        }
 
         // Filter by search
         if (searchQuery) {
@@ -73,8 +82,8 @@ export function useReminders({
       })
       .sort((a, b) => {
         // Move completed reminders to bottom
-        if (a.is_completed !== b.is_completed) {
-          return a.is_completed ? 1 : -1;
+        if ((a.status === "notified") !== (b.status === "notified")) {
+          return a.status === "notified" ? 1 : -1;
         }
         // Sort by date (earliest first)
         return (
@@ -84,24 +93,12 @@ export function useReminders({
       });
   }, [reminders, filter, searchQuery]);
 
-  // Calculate stats
-  const stats = useMemo(() => {
-    return {
-      total: reminders.length,
-      active: reminders.filter((r) => !r.is_completed).length,
-      completed: reminders.filter((r) => r.is_completed).length,
-      overdue: reminders.filter(
-        (r) => !r.is_completed && new Date(r.scheduled_at) < new Date()
-      ).length,
-    };
-  }, [reminders]);
-
   // Handlers
   const createReminder = async (
     reminderData: Omit<
       Reminder,
-      "id" | "is_completed" | "status" | "created_at" | "updated_at"
-    >
+      "id" | "status" | "status" | "created_at" | "updated_at"
+    >,
   ) => {
     try {
       setError(null);
@@ -110,14 +107,14 @@ export function useReminders({
 
       const newReminder = await reminderApi.create(
         token,
-        reminderData as CreateReminderData
+        reminderData as CreateReminderData,
       );
       setReminders([...reminders, newReminder]);
       return newReminder;
     } catch (err) {
       console.error("Error creating reminder:", err);
       setError(
-        err instanceof Error ? err.message : "Failed to create reminder"
+        err instanceof Error ? err.message : "Failed to create reminder",
       );
       throw err;
     }
@@ -127,8 +124,8 @@ export function useReminders({
     id: number,
     reminderData: Omit<
       Reminder,
-      "id" | "is_completed" | "status" | "created_at" | "updated_at"
-    >
+      "id" | "status" | "status" | "created_at" | "updated_at"
+    >,
   ) => {
     try {
       setError(null);
@@ -141,7 +138,7 @@ export function useReminders({
     } catch (err) {
       console.error("Error updating reminder:", err);
       setError(
-        err instanceof Error ? err.message : "Failed to update reminder"
+        err instanceof Error ? err.message : "Failed to update reminder",
       );
       throw err;
     }
@@ -158,7 +155,7 @@ export function useReminders({
     } catch (err) {
       console.error("Error deleting reminder:", err);
       setError(
-        err instanceof Error ? err.message : "Failed to delete reminder"
+        err instanceof Error ? err.message : "Failed to delete reminder",
       );
       throw err;
     }
@@ -176,7 +173,7 @@ export function useReminders({
     } catch (err) {
       console.error("Error toggling reminder:", err);
       setError(
-        err instanceof Error ? err.message : "Failed to toggle reminder"
+        err instanceof Error ? err.message : "Failed to toggle reminder",
       );
       throw err;
     }

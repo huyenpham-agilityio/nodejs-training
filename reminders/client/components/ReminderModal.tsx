@@ -10,7 +10,6 @@ interface Reminder {
   title: string;
   description?: string;
   scheduled_at: string;
-  is_completed?: boolean;
 }
 
 // Zod validation schema
@@ -32,7 +31,7 @@ const reminderSchema = z.object({
         const selectedDate = new Date(date);
         return selectedDate > new Date();
       },
-      { message: "Reminder must be scheduled in the future" }
+      { message: "Reminder must be scheduled in the future" },
     ),
 });
 
@@ -41,7 +40,7 @@ type ReminderFormData = z.infer<typeof reminderSchema>;
 interface ReminderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (reminder: Omit<Reminder, "id" | "is_completed">) => void;
+  onSave: (reminder: Omit<Reminder, "id">) => void;
   reminder?: Reminder | null;
 }
 
