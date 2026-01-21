@@ -4,6 +4,13 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+// Extend dayjs with plugins
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 interface Reminder {
   id?: number;
@@ -28,8 +35,8 @@ const reminderSchema = z.object({
     .min(1, "Date and time is required")
     .refine(
       (date) => {
-        const selectedDate = new Date(date);
-        return selectedDate > new Date();
+        const selectedDate = dayjs(date);
+        return selectedDate.isAfter(dayjs());
       },
       { message: "Reminder must be scheduled in the future" },
     ),
@@ -68,11 +75,15 @@ export default function ReminderModal({
   useEffect(() => {
     if (isOpen) {
       if (reminder) {
-        const date = new Date(reminder.scheduled_at);
+        // Parse the UTC datetime from server and convert to local timezone
+        const localDateTime = dayjs(reminder.scheduled_at).format(
+          "YYYY-MM-DDTHH:mm",
+        );
+
         reset({
           title: reminder.title,
           description: reminder.description || "",
-          scheduled_at: date.toISOString().slice(0, 16),
+          scheduled_at: localDateTime,
         });
       } else {
         reset({
@@ -85,10 +96,14 @@ export default function ReminderModal({
   }, [reminder, reset, isOpen]);
 
   const onSubmit = (data: ReminderFormData) => {
+    // The datetime-local input gives us a string like "2026-01-21T17:46" (no timezone)
+    // Dayjs will treat this as local time and convert to UTC ISO string for the server
+    const isoString = dayjs(data.scheduled_at).toISOString();
+
     onSave({
       title: data.title.trim(),
       description: data.description?.trim() || undefined,
-      scheduled_at: new Date(data.scheduled_at).toISOString(),
+      scheduled_at: isoString,
     });
 
     reset();

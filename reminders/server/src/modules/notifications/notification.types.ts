@@ -10,9 +10,7 @@ export interface NotificationContext {
 
 export interface NotificationJobData {
   reminder_id: number;
-  user_id: number;
   title: string;
-  scheduled_at: Date;
   attempts?: number;
 }
 

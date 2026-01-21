@@ -1,5 +1,6 @@
 import { NotificationProvider } from './notification.provider';
 import { NotificationContext } from '../notification.types';
+import dayjs from 'dayjs';
 
 export class ConsoleNotificationProvider extends NotificationProvider {
   name = 'console';
@@ -10,7 +11,7 @@ export class ConsoleNotificationProvider extends NotificationProvider {
     console.log(`Reminder ID: ${context.reminder_id}`);
     console.log(`User: ${context.user_email}`);
     console.log(`Title: ${context.title}`);
-    console.log(`Scheduled time: ${new Date(context.scheduled_at).toLocaleString()}`);
+    console.log(`Scheduled time: ${dayjs(context.scheduled_at).format('YYYY-MM-DD HH:mm:ss')}`);
 
     if (context.description) {
       console.log(`Description: ${context.description}`);

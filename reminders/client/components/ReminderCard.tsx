@@ -1,5 +1,7 @@
 "use client";
 
+import dayjs from "dayjs";
+
 interface Reminder {
   id: number;
   title: string;
@@ -21,20 +23,13 @@ export default function ReminderCard({
   onDelete,
   onToggleComplete,
 }: ReminderCardProps) {
-  const reminderDate = new Date(reminder.scheduled_at);
-  const now = new Date();
+  const reminderDate = dayjs(reminder.scheduled_at);
   const isCancelled = reminder.status == "cancelled";
   const isCompleted = reminder.status === "notified";
 
-  // Format date
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  // Format date to local timezone
+  const formatDate = (date: dayjs.Dayjs) => {
+    return date.format("MMM D, YYYY hh:mm A");
   };
 
   return (

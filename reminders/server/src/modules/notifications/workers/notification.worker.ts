@@ -1,6 +1,7 @@
 import { Job, Worker } from 'bullmq';
 import { NotificationJobData } from '@/modules/notifications/notification.types';
 import { QUEUE_NAMES, queueConnection } from '@/configs/queue';
+import dayjs from 'dayjs';
 
 import { notificationService } from '../notification.services';
 
@@ -21,7 +22,7 @@ export const notificationWorker = new Worker<NotificationJobData>(
       return {
         success: true,
         reminder_id,
-        processed_at: new Date().toISOString(),
+        processed_at: dayjs().toISOString(),
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

@@ -1,6 +1,7 @@
 import { Repository } from 'typeorm';
 import AppDataSource from '@/configs/database';
 import { Reminder, ReminderStatus } from './entities/Reminder.entity';
+import dayjs from 'dayjs';
 
 /**
  * Reminder Repository
@@ -69,7 +70,7 @@ export class ReminderRepository {
   markAsNotified = async (id: number): Promise<Reminder | null> => {
     return await this.update(id, {
       status: ReminderStatus.NOTIFIED,
-      updated_at: new Date(),
+      updated_at: dayjs().toDate(),
     });
   };
 

@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { reminderApi, CreateReminderData } from "@/lib/api";
+import dayjs from "dayjs";
 
 interface Reminder {
   id: number;
@@ -87,8 +88,7 @@ export function useReminders({
         }
         // Sort by date (earliest first)
         return (
-          new Date(a.scheduled_at).getTime() -
-          new Date(b.scheduled_at).getTime()
+          dayjs(a.scheduled_at).valueOf() - dayjs(b.scheduled_at).valueOf()
         );
       });
   }, [reminders, filter, searchQuery]);

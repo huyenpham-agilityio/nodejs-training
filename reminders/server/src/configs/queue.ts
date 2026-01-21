@@ -1,6 +1,7 @@
 import { Queue, QueueOptions } from 'bullmq';
 import { redisConfig } from './redis';
 import { NotificationJobData } from '@/modules/notifications/notification.types';
+import dayjs from 'dayjs';
 
 const queuePrefix = process.env.BULLMQ_PREFIX || 'reminders';
 
@@ -42,9 +43,7 @@ export const scheduleNotificationJob = async (
   data: NotificationJobData,
   scheduledTime: Date
 ): Promise<void> => {
-  const now = new Date();
-  const delay = scheduledTime.getTime() - now.getTime();
-
+  const delay = dayjs(scheduledTime).diff(dayjs(), 'millisecond');
   const actualDelay = delay > 0 ? delay : 0;
 
   await notificationQueue.add('send_notification', data, {
@@ -54,7 +53,7 @@ export const scheduleNotificationJob = async (
   });
 
   console.log(`Added notification job for reminder ID ${data.reminder_id} to the queue`);
-  console.log(`Scheduled to run in ${actualDelay}ms (${scheduledTime.toISOString()})`);
+  console.log(`Scheduled to run in ${actualDelay}ms (${dayjs(scheduledTime).toISOString()})`);
 };
 
 export const cancelNotificationJob = async (reminderId: number): Promise<void> => {
@@ -67,6 +66,15 @@ export const cancelNotificationJob = async (reminderId: number): Promise<void> =
   } else {
     console.log(`No notification job found for reminder ID ${reminderId} to cancel`);
   }
+};
+
+export const rescheduleNotificationJob = async (
+  data: NotificationJobData,
+  newScheduledTime: Date
+): Promise<void> => {
+  await cancelNotificationJob(data.reminder_id);
+  await scheduleNotificationJob(data, newScheduledTime);
+  console.log(`Rescheduled notification job for reminder ID ${data.reminder_id}`);
 };
 
 notificationQueue.on('error', (error) => {
