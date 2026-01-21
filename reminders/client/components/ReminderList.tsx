@@ -15,7 +15,6 @@ interface ReminderListProps {
   searchQuery: string;
   onEdit: (reminder: Reminder) => void;
   onDelete: (id: number) => void;
-  onToggleComplete: (id: number) => void;
   onCreateClick: () => void;
 }
 
@@ -24,7 +23,6 @@ export default function ReminderList({
   searchQuery,
   onEdit,
   onDelete,
-  onToggleComplete,
   onCreateClick,
 }: ReminderListProps) {
   if (reminders.length === 0) {
@@ -59,7 +57,6 @@ export default function ReminderList({
           reminder={reminder}
           onEdit={onEdit}
           onDelete={onDelete}
-          onToggleComplete={onToggleComplete}
         />
       ))}
     </div>

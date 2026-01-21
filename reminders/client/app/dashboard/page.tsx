@@ -28,7 +28,6 @@ export default function DashboardPage() {
     createReminder,
     updateReminder,
     deleteReminder,
-    toggleComplete,
     isLoading,
     error,
   } = useReminders();
@@ -142,7 +141,6 @@ export default function DashboardPage() {
           searchQuery={searchQuery}
           onEdit={handleEdit}
           onDelete={handleDelete}
-          onToggleComplete={toggleComplete}
           onCreateClick={handleCreate}
         />
       </main>

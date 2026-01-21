@@ -28,9 +28,11 @@ export function useReminders({
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<{
     total: number;
-  }>({ total: 0 });
+    active: number;
+    completed: number;
+  }>({ total: 0, active: 0, completed: 0 });
 
-  // Fetch reminders from API
+  // Fetch reminders from API with filters
   const fetchReminders = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -38,7 +40,11 @@ export function useReminders({
       const token = await getToken();
       if (!token) return;
 
-      const data = await reminderApi.getAll(token);
+      // Pass filter and search to API for server-side filtering
+      const statusParam = filter === "all" ? undefined : filter;
+      const searchParam = searchQuery.trim() || undefined;
+
+      const data = await reminderApi.getAll(token, searchParam, statusParam);
       setReminders(data);
 
       const currentStats = await reminderApi.getStats(token);
@@ -51,47 +57,24 @@ export function useReminders({
     } finally {
       setIsLoading(false);
     }
-  }, [getToken]);
+  }, [getToken, filter, searchQuery]);
 
-  // Fetch reminders on mount
+  // Fetch reminders on mount and when filters change
   useEffect(() => {
     fetchReminders();
   }, [fetchReminders]);
 
-  // Filter and sort reminders
+  // Reminders are already filtered by the server, just sort them
   const sortedReminders = useMemo(() => {
-    return reminders
-      .filter((reminder) => {
-        // Filter by status
-        if (filter === "active" && reminder.status === "notified") {
-          return false;
-        }
-        if (filter === "completed" && reminder.status !== "notified") {
-          return false;
-        }
-
-        // Filter by search
-        if (searchQuery) {
-          const query = searchQuery.toLowerCase();
-          return (
-            reminder.title.toLowerCase().includes(query) ||
-            reminder.description?.toLowerCase().includes(query)
-          );
-        }
-
-        return true;
-      })
-      .sort((a, b) => {
-        // Move completed reminders to bottom
-        if ((a.status === "notified") !== (b.status === "notified")) {
-          return a.status === "notified" ? 1 : -1;
-        }
-        // Sort by date (earliest first)
-        return (
-          dayjs(a.scheduled_at).valueOf() - dayjs(b.scheduled_at).valueOf()
-        );
-      });
-  }, [reminders, filter, searchQuery]);
+    return reminders.sort((a, b) => {
+      // Move completed reminders to bottom
+      if ((a.status === "notified") !== (b.status === "notified")) {
+        return a.status === "notified" ? 1 : -1;
+      }
+      // Sort by date (earliest first)
+      return dayjs(a.scheduled_at).valueOf() - dayjs(b.scheduled_at).valueOf();
+    });
+  }, [reminders]);
 
   // Handlers
   const createReminder = async (
@@ -161,24 +144,6 @@ export function useReminders({
     }
   };
 
-  const toggleComplete = async (id: number) => {
-    try {
-      setError(null);
-      const token = await getToken();
-      if (!token) throw new Error("Not authenticated");
-
-      const updated = await reminderApi.toggleComplete(token, id);
-      setReminders(reminders.map((r) => (r.id === id ? updated : r)));
-      return updated;
-    } catch (err) {
-      console.error("Error toggling reminder:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to toggle reminder",
-      );
-      throw err;
-    }
-  };
-
   return {
     reminders,
     sortedReminders,
@@ -190,7 +155,6 @@ export function useReminders({
     createReminder,
     updateReminder,
     deleteReminder,
-    toggleComplete,
     isLoading,
     error,
     refetch: fetchReminders,

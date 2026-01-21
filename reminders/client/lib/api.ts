@@ -75,9 +75,20 @@ async function fetchWithAuth(
 }
 
 export const reminderApi = {
-  // Get all reminders
-  async getAll(token: string): Promise<Reminder[]> {
-    const data = await fetchWithAuth("/reminders", token);
+  // Get all reminders with optional filters
+  async getAll(
+    token: string,
+    search?: string,
+    status?: string,
+  ): Promise<Reminder[]> {
+    const params = new URLSearchParams();
+    if (search) params.append("search", search);
+    if (status) params.append("status", status);
+
+    const queryString = params.toString();
+    const endpoint = queryString ? `/reminders?${queryString}` : "/reminders";
+
+    const data = await fetchWithAuth(endpoint, token);
     return data.data?.reminders || [];
   },
 
@@ -109,20 +120,11 @@ export const reminderApi = {
     return data.data?.reminder || data.data;
   },
 
-  // Toggle reminder completion
-  async toggleComplete(token: string, id: number): Promise<Reminder> {
-    const data = await fetchWithAuth(`/reminders/${id}/toggle`, token, {
-      method: "PATCH",
-    });
-    return data.data?.reminder || data.data;
-  },
-
   // Get statistics
   async getStats(token: string): Promise<{
     total: number;
     active: number;
     completed: number;
-    cancelled: number;
   }> {
     const data = await fetchWithAuth("/reminders/stats", token);
     return data.data?.stats || data.data;

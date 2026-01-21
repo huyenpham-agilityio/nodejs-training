@@ -14,17 +14,14 @@ interface ReminderCardProps {
   reminder: Reminder;
   onEdit: (reminder: Reminder) => void;
   onDelete: (id: number) => void;
-  onToggleComplete: (id: number) => void;
 }
 
 export default function ReminderCard({
   reminder,
   onEdit,
   onDelete,
-  onToggleComplete,
 }: ReminderCardProps) {
   const reminderDate = dayjs(reminder.scheduled_at);
-  const isCancelled = reminder.status == "cancelled";
   const isCompleted = reminder.status === "notified";
 
   // Format date to local timezone
@@ -36,129 +33,76 @@ export default function ReminderCard({
     <div
       className={`group relative bg-linear-to-br from-gray-800 to-gray-900 rounded-xl shadow-lg border border-gray-700 p-6 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/20 hover:scale-[1.02] hover:-translate-y-1 hover:border-indigo-500/50 ${
         isCompleted ? "opacity-60" : ""
-      } ${
-        isCancelled
-          ? "border-l-4 border-red-500 bg-linear-to-br from-red-950/50 to-gray-900"
-          : ""
       }`}
     >
       {/* Gradient accent line at top */}
-      {!isCancelled && (
-        <div className='absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-t-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
-      )}
+      <div className='absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-t-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
 
       <div className='flex items-start justify-between'>
-        <div className='flex items-start gap-4 flex-1'>
-          {/* Custom Checkbox */}
-          <div className='relative flex items-center justify-center mt-1'>
-            <input
-              type='checkbox'
-              checked={isCompleted}
-              onChange={() => onToggleComplete(reminder.id)}
-              className='peer w-6 h-6 appearance-none border-2 border-gray-600 bg-gray-900 rounded-lg cursor-pointer transition-all duration-200 checked:border-indigo-500 checked:bg-indigo-600 hover:border-indigo-400 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900'
-            />
-            {/* Checkmark Icon */}
-            <svg
-              className='absolute w-4 h-4 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity duration-200'
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={3}
-                d='M5 13l4 4L19 7'
-              />
-            </svg>
-          </div>
+        <div className='flex-1 min-w-0'>
+          {/* Title */}
+          <h3
+            className={`text-xl font-bold mb-2 transition-all duration-200 ${
+              isCompleted
+                ? "line-through text-gray-500"
+                : "text-gray-100 group-hover:text-indigo-400"
+            }`}
+          >
+            {reminder.title}
+          </h3>
 
-          <div className='flex-1 min-w-0'>
-            {/* Title */}
-            <h3
-              className={`text-xl font-bold mb-2 transition-all duration-200 ${
-                isCompleted
-                  ? "line-through text-gray-500"
-                  : isCancelled
-                    ? "text-white"
-                    : "text-gray-100 group-hover:text-indigo-400"
+          {/* Description */}
+          {reminder.description && (
+            <p
+              className={`text-gray-400 mt-2 text-sm leading-relaxed line-clamp-2 ${
+                isCompleted ? "text-gray-600" : ""
               }`}
             >
-              {reminder.title}
-            </h3>
+              {reminder.description}
+            </p>
+          )}
 
-            {/* Description */}
-            {reminder.description && (
-              <p
-                className={`text-gray-400 mt-2 text-sm leading-relaxed line-clamp-2 ${
-                  isCompleted ? "text-gray-600" : ""
-                }`}
+          {/* Time and Status Badges */}
+          <div className='flex items-center gap-2 mt-4 flex-wrap'>
+            <div
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium ${
+                isCompleted
+                  ? "bg-gray-800 text-gray-400 border border-gray-700"
+                  : "bg-indigo-900/50 text-indigo-300 border border-indigo-800"
+              }`}
+            >
+              <svg
+                className='w-4 h-4'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
               >
-                {reminder.description}
-              </p>
-            )}
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
+                />
+              </svg>
+              <span>{formatDate(reminderDate)}</span>
+            </div>
 
-            {/* Time and Status Badges */}
-            <div className='flex items-center gap-2 mt-4 flex-wrap'>
-              <div
-                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium ${
-                  isCancelled
-                    ? "bg-red-900/50 text-red-300 border border-red-800"
-                    : isCompleted
-                      ? "bg-gray-800 text-gray-400 border border-gray-700"
-                      : "bg-indigo-900/50 text-indigo-300 border border-indigo-800"
-                }`}
-              >
+            {isCompleted && (
+              <span className='inline-flex items-center gap-1.5 text-xs bg-linear-to-r from-green-500 to-emerald-600 text-white px-3 py-1.5 rounded-lg font-semibold shadow-sm'>
                 <svg
-                  className='w-4 h-4'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
+                  className='w-3.5 h-3.5'
+                  fill='currentColor'
+                  viewBox='0 0 20 20'
                 >
                   <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
+                    fillRule='evenodd'
+                    d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
+                    clipRule='evenodd'
                   />
                 </svg>
-                <span>{formatDate(reminderDate)}</span>
-              </div>
-
-              {isCancelled && (
-                <span className='inline-flex items-center gap-1.5 text-xs bg-linear-to-r from-red-500 to-red-600 text-white px-3 py-1.5 rounded-lg font-semibold shadow-sm'>
-                  <svg
-                    className='w-3.5 h-3.5'
-                    fill='currentColor'
-                    viewBox='0 0 20 20'
-                  >
-                    <path
-                      fillRule='evenodd'
-                      d='M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z'
-                      clipRule='evenodd'
-                    />
-                  </svg>
-                  Cancelled
-                </span>
-              )}
-
-              {isCompleted && (
-                <span className='inline-flex items-center gap-1.5 text-xs bg-linear-to-r from-green-500 to-emerald-600 text-white px-3 py-1.5 rounded-lg font-semibold shadow-sm'>
-                  <svg
-                    className='w-3.5 h-3.5'
-                    fill='currentColor'
-                    viewBox='0 0 20 20'
-                  >
-                    <path
-                      fillRule='evenodd'
-                      d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
-                      clipRule='evenodd'
-                    />
-                  </svg>
-                  Completed
-                </span>
-              )}
-            </div>
+                Completed
+              </span>
+            )}
           </div>
         </div>
 

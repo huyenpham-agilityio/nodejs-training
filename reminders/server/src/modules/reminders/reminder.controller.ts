@@ -14,7 +14,7 @@ export class ReminderController {
   }
   /**
    * Get all reminders for authenticated user
-   * @route GET /api/v1/reminders
+   * @route GET /api/v1/reminders?search=text&status=active|completed
    */
   getAllReminders = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -28,7 +28,16 @@ export class ReminderController {
         return;
       }
 
-      const reminders = await this.reminderService.findByUserId(userId);
+      const { search, status } = req.query;
+
+      // Validate status parameter
+      const validStatus = status === 'active' || status === 'completed' ? status : undefined;
+
+      const reminders = await this.reminderService.findByUserId(
+        userId,
+        search as string | undefined,
+        validStatus
+      );
 
       res.status(HTTP_STATUS_CODES.OK).json({
         status: 'success',
