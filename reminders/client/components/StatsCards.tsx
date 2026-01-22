@@ -35,16 +35,16 @@ function StatsCards() {
 
   useEffect(() => {
     fetchStats();
-    
+
     // Refresh stats every 30 seconds
-    const interval = setInterval(fetchStats, 30000);
-    
-    return () => clearInterval(interval);
+    // const interval = setInterval(fetchStats, 30000);
+
+    // return () => clearInterval(interval);
   }, [fetchStats]);
 
   // Show loading skeleton or zeros while loading
-  const { total, active, completed } = isLoading 
-    ? { total: 0, active: 0, completed: 0 } 
+  const { total, active, completed } = isLoading
+    ? { total: 0, active: 0, completed: 0 }
     : stats;
   return (
     <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-8'>

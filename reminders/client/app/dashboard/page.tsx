@@ -40,24 +40,24 @@ export default function DashboardPage() {
   useEffect(() => {
     const syncUser = async () => {
       if (!isLoaded || !isSignedIn) return;
-      
+
       try {
         const token = await getToken();
         if (!token) {
-          console.error('No token available');
+          console.error("No token available");
           return;
         }
 
-        console.log('Syncing user with backend...');
+        console.log("Syncing user with backend...");
         const userData = await userApi.getMe(token);
         console.log("User synced successfully:", userData);
       } catch (error) {
         console.error("Error syncing user:", error);
-        
+
         // Log more details
         if (error instanceof Error) {
-          console.error('Error message:', error.message);
-          console.error('Error stack:', error.stack);
+          console.error("Error message:", error.message);
+          console.error("Error stack:", error.stack);
         }
       }
     };
@@ -76,29 +76,35 @@ export default function DashboardPage() {
     setIsModalOpen(true);
   }, []);
 
-  const handleSave = useCallback(async (reminderData: Omit<Reminder, "id" | "status">) => {
-    try {
-      if (editingReminder) {
-        await updateReminder(editingReminder.id, reminderData);
-      } else {
-        await createReminder(reminderData);
-      }
-      setIsModalOpen(false);
-      setEditingReminder(null);
-    } catch (error) {
-      console.error("Error saving reminder:", error);
-    }
-  }, [editingReminder, updateReminder, createReminder]);
-
-  const handleDelete = useCallback(async (id: number) => {
-    if (confirm("Are you sure you want to delete this reminder?")) {
+  const handleSave = useCallback(
+    async (reminderData: Omit<Reminder, "id" | "status">) => {
       try {
-        await deleteReminder(id);
+        if (editingReminder) {
+          await updateReminder(editingReminder.id, reminderData);
+        } else {
+          await createReminder(reminderData);
+        }
+        setIsModalOpen(false);
+        setEditingReminder(null);
       } catch (error) {
-        console.error("Error deleting reminder:", error);
+        console.error("Error saving reminder:", error);
       }
-    }
-  }, [deleteReminder]);
+    },
+    [editingReminder, updateReminder, createReminder],
+  );
+
+  const handleDelete = useCallback(
+    async (id: number) => {
+      if (confirm("Are you sure you want to delete this reminder?")) {
+        try {
+          await deleteReminder(id);
+        } catch (error) {
+          console.error("Error deleting reminder:", error);
+        }
+      }
+    },
+    [deleteReminder],
+  );
 
   const handleCloseModal = useCallback(() => {
     setIsModalOpen(false);

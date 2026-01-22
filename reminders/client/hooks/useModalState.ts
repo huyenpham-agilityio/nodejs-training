@@ -23,7 +23,7 @@ export function useModalState(
   isModalOpen: boolean,
   setIsModalOpen: (open: boolean) => void,
   editingReminder: Reminder | null,
-  setEditingReminder: (reminder: Reminder | null) => void
+  setEditingReminder: (reminder: Reminder | null) => void,
 ): UseModalStateReturn {
   const openCreate = useCallback(() => {
     setEditingReminder(null);
@@ -35,7 +35,7 @@ export function useModalState(
       setEditingReminder(reminder);
       setIsModalOpen(true);
     },
-    [setEditingReminder, setIsModalOpen]
+    [setEditingReminder, setIsModalOpen],
   );
 
   const close = useCallback(() => {
