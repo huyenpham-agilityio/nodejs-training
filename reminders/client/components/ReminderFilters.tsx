@@ -1,5 +1,7 @@
 "use client";
 
+import { memo } from "react";
+
 interface ReminderFiltersProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
@@ -8,7 +10,7 @@ interface ReminderFiltersProps {
   onCreateClick: () => void;
 }
 
-export default function ReminderFilters({
+function ReminderFilters({
   searchQuery,
   onSearchChange,
   filter,
@@ -105,3 +107,5 @@ export default function ReminderFilters({
     </div>
   );
 }
+
+export default memo(ReminderFilters);

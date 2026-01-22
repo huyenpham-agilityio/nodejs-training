@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useAuth, UserButton } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import ReminderModal from "@/components/ReminderModal";
 import StatsCards from "@/components/StatsCards";
 import ReminderFilters from "@/components/ReminderFilters";
 import ReminderList from "@/components/ReminderList";
+import DashboardHeader from "@/components/DashboardHeader";
+import ErrorMessage from "@/components/ErrorMessage";
 import { useReminders } from "@/hooks/useReminders";
 import { userApi } from "@/lib/api";
 
@@ -20,7 +22,6 @@ interface Reminder {
 export default function DashboardPage() {
   const {
     sortedReminders,
-    stats,
     filter,
     setFilter,
     searchQuery,
@@ -28,7 +29,6 @@ export default function DashboardPage() {
     createReminder,
     updateReminder,
     deleteReminder,
-    isLoading,
     error,
   } = useReminders();
   const { getToken, isLoaded, isSignedIn } = useAuth();
@@ -36,37 +36,47 @@ export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
 
-  const fetchExternalData = useCallback(async () => {
-    const token = await getToken();
-    if (!token) return;
-
-    try {
-      // This will create the user in the database if they don't exist
-      const userData = await userApi.getMe(token);
-      console.log("User synced:", userData);
-    } catch (error) {
-      console.error("Error syncing user:", error);
-    }
-  }, [getToken]);
-
+  // Sync user on mount
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      // Sync user first to ensure they exist in the database
-      fetchExternalData();
-    }
-  }, [fetchExternalData, isLoaded, isSignedIn]);
+    const syncUser = async () => {
+      if (!isLoaded || !isSignedIn) return;
+      
+      try {
+        const token = await getToken();
+        if (!token) {
+          console.error('No token available');
+          return;
+        }
 
-  const handleCreate = () => {
+        console.log('Syncing user with backend...');
+        const userData = await userApi.getMe(token);
+        console.log("User synced successfully:", userData);
+      } catch (error) {
+        console.error("Error syncing user:", error);
+        
+        // Log more details
+        if (error instanceof Error) {
+          console.error('Error message:', error.message);
+          console.error('Error stack:', error.stack);
+        }
+      }
+    };
+
+    syncUser();
+  }, [getToken, isLoaded, isSignedIn]);
+
+  // Memoized handlers to prevent re-renders
+  const handleCreate = useCallback(() => {
     setEditingReminder(null);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const handleEdit = (reminder: Reminder) => {
+  const handleEdit = useCallback((reminder: Reminder) => {
     setEditingReminder(reminder);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const handleSave = async (reminderData: Omit<Reminder, "id" | "status">) => {
+  const handleSave = useCallback(async (reminderData: Omit<Reminder, "id" | "status">) => {
     try {
       if (editingReminder) {
         await updateReminder(editingReminder.id, reminderData);
@@ -77,54 +87,36 @@ export default function DashboardPage() {
       setEditingReminder(null);
     } catch (error) {
       console.error("Error saving reminder:", error);
-      // Error is already handled in the hook, but you could show a toast here
     }
-  };
+  }, [editingReminder, updateReminder, createReminder]);
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = useCallback(async (id: number) => {
     if (confirm("Are you sure you want to delete this reminder?")) {
       try {
         await deleteReminder(id);
       } catch (error) {
         console.error("Error deleting reminder:", error);
-        // Error is already handled in the hook
       }
     }
-  };
+  }, [deleteReminder]);
+
+  const handleCloseModal = useCallback(() => {
+    setIsModalOpen(false);
+    setEditingReminder(null);
+  }, []);
 
   return (
     <div className='min-h-screen bg-gray-950 pt-20'>
       {/* Header */}
-      <header className='fixed top-0 left-0 right-0 z-40 bg-gray-900/95 backdrop-blur-md shadow-lg border-b border-gray-800'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4'>
-          <div className='flex justify-between items-center'>
-            <div className='flex items-center gap-3'>
-              <span className='text-3xl'>📝</span>
-              <h1 className='text-2xl font-bold text-white'>My Reminders</h1>
-            </div>
-            <UserButton afterSignOutUrl='/' />
-          </div>
-        </div>
-      </header>
+      <DashboardHeader />
 
       {/* Main Content */}
       <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
         {/* Error Message */}
-        {error && (
-          <div className='mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg'>
-            <p className='text-red-400 text-sm'>{error}</p>
-          </div>
-        )}
-
-        {/* Loading State */}
-        {isLoading && (
-          <div className='flex justify-center items-center py-12'>
-            <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500'></div>
-          </div>
-        )}
+        <ErrorMessage message={error} />
 
         {/* Stats Cards */}
-        {!isLoading && <StatsCards {...stats} />}
+        <StatsCards />
 
         {/* Filters */}
         <ReminderFilters
@@ -148,10 +140,7 @@ export default function DashboardPage() {
       {/* Modal */}
       <ReminderModal
         isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingReminder(null);
-        }}
+        onClose={handleCloseModal}
         onSave={handleSave}
         reminder={editingReminder}
       />

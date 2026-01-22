@@ -1,7 +1,9 @@
 import { NotificationProvider } from './notification.provider';
 import { ConsoleNotificationProvider } from './console.provider';
+import { EmailNotificationProvider } from './email.provider';
 
 const consoleProvider = new ConsoleNotificationProvider();
+const emailProvider = new EmailNotificationProvider();
 
 export class NotificationProviderFactory {
   providers: NotificationProvider[] = [];
@@ -9,6 +11,7 @@ export class NotificationProviderFactory {
   constructor() {
     // Register available providers here
     this.providers.push(consoleProvider);
+    this.providers.push(emailProvider);
   }
 
   register = (provider: NotificationProvider) => {

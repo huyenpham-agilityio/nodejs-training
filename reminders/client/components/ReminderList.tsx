@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import ReminderCard from "./ReminderCard";
 
 interface Reminder {
@@ -18,7 +19,7 @@ interface ReminderListProps {
   onCreateClick: () => void;
 }
 
-export default function ReminderList({
+function ReminderList({
   reminders,
   searchQuery,
   onEdit,
@@ -62,3 +63,5 @@ export default function ReminderList({
     </div>
   );
 }
+
+export default memo(ReminderList);
