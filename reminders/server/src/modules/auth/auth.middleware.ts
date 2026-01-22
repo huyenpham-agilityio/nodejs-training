@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { getAuth } from '@clerk/express';
 import { HTTP_STATUS_CODES } from '@/constants/http';
+import { MESSAGES } from '@/constants/messages';
+import { STATUS } from '@/constants/status';
 
 /**
  * Middleware to require authentication for protected routes
@@ -11,8 +13,8 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction): vo
 
   if (!auth?.userId) {
     res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
-      status: 'error',
-      message: 'Unauthorized - Authentication required',
+      status: STATUS.ERROR,
+      message: MESSAGES.UNAUTHORIZED_AUTH_REQUIRED,
     });
     return;
   }

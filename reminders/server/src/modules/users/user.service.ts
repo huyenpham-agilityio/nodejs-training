@@ -1,6 +1,7 @@
 import { UserRepository } from './user.repository';
 import { User } from './entities/User.entity';
 import { clerkClient } from '@clerk/express';
+import { MESSAGES } from '@/constants/messages';
 
 /**
  * User Service
@@ -30,7 +31,7 @@ export class UserService {
 
       const email = clerkUser.emailAddresses[0]?.emailAddress;
       if (!email) {
-        throw new Error('User email not found in Clerk');
+        throw new Error(MESSAGES.USER_EMAIL_NOT_FOUND);
       }
 
       user = await this.userRepository.create({
@@ -50,7 +51,7 @@ export class UserService {
       }
 
       throw new Error(
-        `Failed to fetch user information: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `${MESSAGES.FAILED_FETCH_USER_INFO}: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
   }
@@ -69,13 +70,13 @@ export class UserService {
     const user = await this.userRepository.findByClerkUserId(clerkUserId);
 
     if (!user) {
-      throw new Error('User not found');
+      throw new Error(MESSAGES.USER_NOT_FOUND);
     }
 
     const updated = await this.userRepository.update(user.id, userData);
 
     if (!updated) {
-      throw new Error('Failed to update user');
+      throw new Error(MESSAGES.FAILED_UPDATE_USER);
     }
 
     return updated;

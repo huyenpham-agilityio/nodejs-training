@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { HTTP_STATUS_CODES } from '@/constants/http';
+import { MESSAGES } from '@/constants/messages';
+import { STATUS } from '@/constants/status';
 import { UserService } from '@/modules/users/user.service';
 
 /**
@@ -23,8 +25,8 @@ export class UserController {
 
       if (!userId) {
         res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
-          status: 'error',
-          message: 'Unauthorized - No user ID provided',
+          status: STATUS.ERROR,
+          message: MESSAGES.UNAUTHORIZED_NO_USER_ID,
         });
         return;
       }
@@ -33,7 +35,7 @@ export class UserController {
       const user = await this.userService.findOrCreateByClerkId(userId);
 
       res.status(HTTP_STATUS_CODES.OK).json({
-        status: 'success',
+        status: STATUS.SUCCESS,
         data: {
           user,
         },
@@ -41,10 +43,11 @@ export class UserController {
     } catch (error) {
       console.error('Error fetching user profile:', error);
 
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch user profile';
+      const errorMessage =
+        error instanceof Error ? error.message : MESSAGES.FAILED_FETCH_USER_PROFILE;
 
       res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-        status: 'error',
+        status: STATUS.ERROR,
         message: errorMessage,
       });
     }

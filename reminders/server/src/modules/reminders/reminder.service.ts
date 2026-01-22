@@ -2,6 +2,7 @@ import { ReminderRepository } from './reminder.repository';
 import { Reminder, ReminderStatus } from './entities/Reminder.entity';
 import { userRepository } from '@/modules/users/user.repository';
 import { clerkClient } from '@clerk/express';
+import { MESSAGES } from '@/constants/messages';
 import {
   scheduleNotificationJob,
   cancelNotificationJob,
@@ -50,7 +51,7 @@ export class ReminderService {
     const reminder = await this.reminderRepository.findByIdWithUser(id);
 
     if (!reminder) {
-      throw new Error('Reminder not found or access denied');
+      throw new Error(MESSAGES.REMINDER_NOT_FOUND);
     }
 
     return reminder;
@@ -62,7 +63,7 @@ export class ReminderService {
   async create(userId: string, reminderData: CreateReminderDTO): Promise<Reminder> {
     // Validate required fields
     if (!reminderData.title || !reminderData.scheduled_at) {
-      throw new Error('Title and scheduled_at are required');
+      throw new Error(MESSAGES.REMINDER_TITLE_SCHEDULED_REQUIRED);
     }
 
     // Get user info from Clerk
@@ -71,7 +72,7 @@ export class ReminderService {
       clerkUser = await clerkClient.users.getUser(userId);
     } catch (error) {
       console.error('Error fetching user from Clerk:', error);
-      throw new Error('Failed to fetch user information');
+      throw new Error(MESSAGES.FAILED_FETCH_USER_INFO);
     }
 
     // Find or create user in database
@@ -84,7 +85,7 @@ export class ReminderService {
     const scheduledAt = dayjs(reminderData.scheduled_at);
 
     if (scheduledAt.isBefore(dayjs()) || scheduledAt.isSame(dayjs())) {
-      throw new Error('scheduled_at must be a future date and time');
+      throw new Error(MESSAGES.REMINDER_FUTURE_DATE_REQUIRED);
     }
 
     // Create reminder
@@ -115,7 +116,7 @@ export class ReminderService {
     const existing = await this.findById(id);
 
     if (!existing) {
-      throw new Error('Reminder not found or access denied');
+      throw new Error(MESSAGES.REMINDER_NOT_FOUND);
     }
 
     // Prepare update data
@@ -138,7 +139,7 @@ export class ReminderService {
 
       // Validate that new scheduled time is in the future if reminder is still pending
       if (existing.status === ReminderStatus.PENDING && newScheduledAt.isBefore(dayjs())) {
-        throw new Error('scheduled_at must be a future date and time');
+        throw new Error(MESSAGES.REMINDER_FUTURE_DATE_REQUIRED);
       }
 
       updateData.scheduled_at = newScheduledAt.toDate();
@@ -148,7 +149,7 @@ export class ReminderService {
     const updated = await this.reminderRepository.update(id, updateData);
 
     if (!updated) {
-      throw new Error('Failed to update reminder');
+      throw new Error(MESSAGES.FAILED_UPDATE_REMINDER);
     }
 
     // Reschedule notification if scheduled_at was updated and reminder is still pending
@@ -181,7 +182,7 @@ export class ReminderService {
     const deleted = await this.reminderRepository.delete(id);
 
     if (!deleted) {
-      throw new Error('Failed to delete reminder');
+      throw new Error(MESSAGES.FAILED_DELETE_REMINDER);
     }
   }
 

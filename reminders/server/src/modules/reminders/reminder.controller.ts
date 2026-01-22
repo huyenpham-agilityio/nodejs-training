@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { HTTP_STATUS_CODES } from '@/constants/http';
+import { MESSAGES } from '@/constants/messages';
+import { STATUS } from '@/constants/status';
 import { ReminderService } from '@/modules/reminders/reminder.service';
 
 /**
@@ -22,8 +24,8 @@ export class ReminderController {
 
       if (!userId) {
         res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
-          status: 'error',
-          message: 'Unauthorized',
+          status: STATUS.ERROR,
+          message: MESSAGES.UNAUTHORIZED,
         });
         return;
       }
@@ -40,7 +42,7 @@ export class ReminderController {
       );
 
       res.status(HTTP_STATUS_CODES.OK).json({
-        status: 'success',
+        status: STATUS.SUCCESS,
         data: {
           reminders,
         },
@@ -48,8 +50,8 @@ export class ReminderController {
     } catch (error) {
       console.error('Error fetching reminders:', error);
       res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-        status: 'error',
-        message: 'Failed to fetch reminders',
+        status: STATUS.ERROR,
+        message: MESSAGES.FAILED_FETCH_REMINDERS,
       });
     }
   };
@@ -65,8 +67,8 @@ export class ReminderController {
 
       if (!userId) {
         res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
-          status: 'error',
-          message: 'Unauthorized',
+          status: STATUS.ERROR,
+          message: MESSAGES.UNAUTHORIZED,
         });
         return;
       }
@@ -74,20 +76,20 @@ export class ReminderController {
       const reminder = await this.reminderService.findById(Number(id));
 
       res.status(HTTP_STATUS_CODES.OK).json({
-        status: 'success',
+        status: STATUS.SUCCESS,
         data: {
           reminder,
         },
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch reminder';
+      const errorMessage = error instanceof Error ? error.message : MESSAGES.FAILED_FETCH_REMINDER;
       const statusCode = errorMessage.includes('not found')
         ? HTTP_STATUS_CODES.NOT_FOUND
         : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 
       console.error('Error fetching reminder:', error);
       res.status(statusCode).json({
-        status: 'error',
+        status: STATUS.ERROR,
         message: errorMessage,
       });
     }
@@ -103,8 +105,8 @@ export class ReminderController {
 
       if (!userId) {
         res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
-          status: 'error',
-          message: 'Unauthorized',
+          status: STATUS.ERROR,
+          message: MESSAGES.UNAUTHORIZED,
         });
         return;
       }
@@ -112,20 +114,20 @@ export class ReminderController {
       const reminder = await this.reminderService.create(userId, req.body);
 
       res.status(HTTP_STATUS_CODES.CREATED).json({
-        status: 'success',
+        status: STATUS.SUCCESS,
         data: {
           reminder,
         },
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create reminder';
+      const errorMessage = error instanceof Error ? error.message : MESSAGES.FAILED_CREATE_REMINDER;
       const statusCode = errorMessage.includes('required')
         ? HTTP_STATUS_CODES.BAD_REQUEST
         : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 
       console.error('Error creating reminder:', error);
       res.status(statusCode).json({
-        status: 'error',
+        status: STATUS.ERROR,
         message: errorMessage,
       });
     }
@@ -142,8 +144,8 @@ export class ReminderController {
 
       if (!userId) {
         res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
-          status: 'error',
-          message: 'Unauthorized',
+          status: STATUS.ERROR,
+          message: MESSAGES.UNAUTHORIZED,
         });
         return;
       }
@@ -151,20 +153,20 @@ export class ReminderController {
       const reminder = await this.reminderService.update(Number(id), req.body);
 
       res.status(HTTP_STATUS_CODES.OK).json({
-        status: 'success',
+        status: STATUS.SUCCESS,
         data: {
           reminder,
         },
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update reminder';
+      const errorMessage = error instanceof Error ? error.message : MESSAGES.FAILED_UPDATE_REMINDER;
       const statusCode = errorMessage.includes('not found')
         ? HTTP_STATUS_CODES.NOT_FOUND
         : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 
       console.error('Error updating reminder:', error);
       res.status(statusCode).json({
-        status: 'error',
+        status: STATUS.ERROR,
         message: errorMessage,
       });
     }
@@ -181,8 +183,8 @@ export class ReminderController {
 
       if (!userId) {
         res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
-          status: 'error',
-          message: 'Unauthorized',
+          status: STATUS.ERROR,
+          message: MESSAGES.UNAUTHORIZED,
         });
         return;
       }
@@ -190,20 +192,20 @@ export class ReminderController {
       await this.reminderService.delete(Number(id));
 
       res.status(HTTP_STATUS_CODES.OK).json({
-        status: 'success',
+        status: STATUS.SUCCESS,
         data: {
-          message: 'Reminder deleted successfully',
+          message: MESSAGES.REMINDER_DELETED_SUCCESS,
         },
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to delete reminder';
+      const errorMessage = error instanceof Error ? error.message : MESSAGES.FAILED_DELETE_REMINDER;
       const statusCode = errorMessage.includes('not found')
         ? HTTP_STATUS_CODES.NOT_FOUND
         : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 
       console.error('Error deleting reminder:', error);
       res.status(statusCode).json({
-        status: 'error',
+        status: STATUS.ERROR,
         message: errorMessage,
       });
     }
@@ -219,8 +221,8 @@ export class ReminderController {
 
       if (!userId) {
         res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
-          status: 'error',
-          message: 'Unauthorized',
+          status: STATUS.ERROR,
+          message: MESSAGES.UNAUTHORIZED,
         });
         return;
       }
@@ -228,7 +230,7 @@ export class ReminderController {
       const stats = await this.reminderService.getStats(userId);
 
       res.status(HTTP_STATUS_CODES.OK).json({
-        status: 'success',
+        status: STATUS.SUCCESS,
         data: {
           stats,
         },
@@ -236,8 +238,8 @@ export class ReminderController {
     } catch (error) {
       console.error('Error fetching stats:', error);
       res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-        status: 'error',
-        message: 'Failed to fetch statistics',
+        status: STATUS.ERROR,
+        message: MESSAGES.FAILED_FETCH_STATISTICS,
       });
     }
   };
