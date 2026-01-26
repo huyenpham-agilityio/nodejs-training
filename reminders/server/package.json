@@ -12,7 +12,9 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "lint-staged": "lint-staged",
     "commitlint": "commitlint --edit",
-    "prepare": "cd ../.. && husky"
+    "prepare": "cd ../.. && husky",
+    "seed:reminders": "ts-node -r tsconfig-paths/register src/scripts/seed-reminders.ts",
+    "clear:reminders": "ts-node -r tsconfig-paths/register src/scripts/clear-reminders.ts"
   },
   "keywords": [
     "api",
@@ -39,6 +41,7 @@
   "devDependencies": {
     "@commitlint/cli": "^20.3.1",
     "@commitlint/config-conventional": "^20.3.1",
+    "@faker-js/faker": "^10.2.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^20.10.6",
