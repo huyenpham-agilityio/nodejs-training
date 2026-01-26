@@ -8,6 +8,7 @@ import ReminderFilters from "@/components/ReminderFilters";
 import ReminderList from "@/components/ReminderList";
 import DashboardHeader from "@/components/DashboardHeader";
 import ErrorMessage from "@/components/ErrorMessage";
+import Pagination from "@/components/Pagination";
 import { useReminders } from "@/hooks/useReminders";
 import { userApi } from "@/lib/api";
 
@@ -30,7 +31,19 @@ export default function DashboardPage() {
     updateReminder,
     deleteReminder,
     error,
-  } = useReminders();
+    isLoading,
+    pagination,
+    page,
+    limit,
+    setLimit,
+    goToPage,
+    nextPage,
+    previousPage,
+  } = useReminders({
+    enablePagination: true,
+    initialPage: 1,
+    initialLimit: 10,
+  });
   const { getToken, isLoaded, isSignedIn } = useAuth();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -131,6 +144,12 @@ export default function DashboardPage() {
           filter={filter}
           onFilterChange={setFilter}
           onCreateClick={handleCreate}
+          showPaginationSettings={true}
+          pageLimit={limit}
+          onPageLimitChange={(newLimit) => {
+            setLimit(newLimit);
+            goToPage(1); // Reset to first page when changing limit
+          }}
         />
 
         {/* Reminders List */}
@@ -141,6 +160,28 @@ export default function DashboardPage() {
           onDelete={handleDelete}
           onCreateClick={handleCreate}
         />
+
+        {/* Pagination */}
+        {pagination && pagination.totalPages > 1 && (
+          <Pagination
+            currentPage={page}
+            totalPages={pagination.totalPages}
+            hasNextPage={pagination.hasNextPage}
+            hasPreviousPage={pagination.hasPreviousPage}
+            onPageChange={goToPage}
+            onNextPage={nextPage}
+            onPreviousPage={previousPage}
+            totalItems={pagination.total}
+            itemsPerPage={pagination.limit}
+          />
+        )}
+
+        {/* Loading Indicator */}
+        {isLoading && (
+          <div className='flex justify-center items-center py-8'>
+            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600'></div>
+          </div>
+        )}
       </main>
 
       {/* Modal */}

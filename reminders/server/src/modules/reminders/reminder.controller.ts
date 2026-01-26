@@ -16,7 +16,7 @@ export class ReminderController {
   }
   /**
    * Get all reminders for authenticated user
-   * @route GET /api/v1/reminders?search=text&status=active|completed
+   * @route GET /api/v1/reminders?search=text&status=active|completed&page=1&limit=10
    */
   getAllReminders = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -30,23 +30,57 @@ export class ReminderController {
         return;
       }
 
-      const { search, status } = req.query;
+      const { search, status, page, limit } = req.query;
 
       // Validate status parameter
       const validStatus = status === 'active' || status === 'completed' ? status : undefined;
 
-      const reminders = await this.reminderService.findByUserId(
-        userId,
-        search as string | undefined,
-        validStatus
-      );
+      // Check if pagination is requested
+      const shouldPaginate = page !== undefined || limit !== undefined;
 
-      res.status(HTTP_STATUS_CODES.OK).json({
-        status: STATUS.SUCCESS,
-        data: {
-          reminders,
-        },
-      });
+      if (shouldPaginate) {
+        const pageNumber = parseInt(page as string) || 1;
+        const limitNumber = parseInt(limit as string) || 10;
+
+        const { reminders, total } = await this.reminderService.findByUserIdPaginated(
+          userId,
+          pageNumber,
+          limitNumber,
+          search as string | undefined,
+          validStatus
+        );
+
+        const totalPages = Math.ceil(total / limitNumber);
+
+        res.status(HTTP_STATUS_CODES.OK).json({
+          status: STATUS.SUCCESS,
+          data: {
+            reminders,
+          },
+          pagination: {
+            page: pageNumber,
+            limit: limitNumber,
+            total,
+            totalPages,
+            hasNextPage: pageNumber < totalPages,
+            hasPreviousPage: pageNumber > 1,
+          },
+        });
+      } else {
+        // Return all reminders without pagination (backward compatibility)
+        const reminders = await this.reminderService.findByUserId(
+          userId,
+          search as string | undefined,
+          validStatus
+        );
+
+        res.status(HTTP_STATUS_CODES.OK).json({
+          status: STATUS.SUCCESS,
+          data: {
+            reminders,
+          },
+        });
+      }
     } catch (error) {
       console.error('Error fetching reminders:', error);
       res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({

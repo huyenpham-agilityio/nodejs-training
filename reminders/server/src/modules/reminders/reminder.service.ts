@@ -44,6 +44,29 @@ export class ReminderService {
   }
 
   /**
+   * Get reminders with pagination
+   */
+  async findByUserIdPaginated(
+    userId: string,
+    page: number = 1,
+    limit: number = 10,
+    search?: string,
+    status?: 'active' | 'completed'
+  ): Promise<{ reminders: Reminder[]; total: number }> {
+    // Validate and sanitize pagination parameters
+    const validPage = Math.max(1, page);
+    const validLimit = Math.min(Math.max(1, limit), 100); // Max 100 items per page
+
+    return this.reminderRepository.findByUserIdPaginated(
+      userId,
+      validPage,
+      validLimit,
+      search,
+      status
+    );
+  }
+
+  /**
    * Get a specific reminder by ID
    * Throws error if not found or doesn't belong to user
    */

@@ -1,6 +1,5 @@
 // API configuration
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || "v1";
 
 export interface Reminder {
   id: number;
@@ -38,6 +37,20 @@ export interface UpdateUserData {
   first_name?: string;
   last_name?: string;
   email?: string;
+}
+
+export interface PaginationMetadata {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: PaginationMetadata;
 }
 
 class ApiError extends Error {
@@ -90,6 +103,36 @@ export const reminderApi = {
 
     const data = await fetchWithAuth(endpoint, token);
     return data.data?.reminders || [];
+  },
+
+  // Get reminders with pagination
+  async getAllPaginated(
+    token: string,
+    page: number = 1,
+    limit: number = 10,
+    search?: string,
+    status?: string,
+  ): Promise<{ reminders: Reminder[]; pagination: PaginationMetadata }> {
+    const params = new URLSearchParams();
+    params.append("page", page.toString());
+    params.append("limit", limit.toString());
+    if (search) params.append("search", search);
+    if (status) params.append("status", status);
+
+    const endpoint = `/reminders?${params.toString()}`;
+    const data = await fetchWithAuth(endpoint, token);
+
+    return {
+      reminders: data.data?.reminders || [],
+      pagination: data.pagination || {
+        page: 1,
+        limit: 10,
+        total: 0,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+    };
   },
 
   // Get reminder by ID
