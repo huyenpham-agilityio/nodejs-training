@@ -1,9 +1,9 @@
 import { NotificationProvider } from './notification.provider';
-import { NotificationContext } from '../notification.types';
+import { NotificationContext, NotificationProviderType } from '../notification.types';
 import dayjs from 'dayjs';
 
 export class ConsoleNotificationProvider extends NotificationProvider {
-  name = 'console';
+  name = NotificationProviderType.CONSOLE;
 
   async send(context: NotificationContext): Promise<void> {
     this.log('info', '\n ===== CONSOLE NOTIFICATION =====');

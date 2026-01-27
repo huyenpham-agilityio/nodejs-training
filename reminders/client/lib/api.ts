@@ -29,6 +29,9 @@ export interface User {
   email: string;
   first_name?: string;
   last_name?: string;
+  email_notifications_enabled: boolean;
+  slack_notifications_enabled: boolean;
+  console_notifications_enabled: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -37,6 +40,16 @@ export interface UpdateUserData {
   first_name?: string;
   last_name?: string;
   email?: string;
+}
+
+export interface NotificationSettings {
+  email_notifications_enabled: boolean;
+  slack_notifications_enabled: boolean;
+}
+
+export interface UpdateNotificationSettings {
+  email_notifications_enabled?: boolean;
+  slack_notifications_enabled?: boolean;
 }
 
 export interface PaginationMetadata {
@@ -195,6 +208,24 @@ export const userApi = {
     const data = await fetchWithAuth(ENDPOINTS.USERS.PROFILE, token, {
       method: "PUT",
       body: JSON.stringify(updates),
+    });
+    return data.data?.user || data.data;
+  },
+
+  // Get notification settings
+  async getNotificationSettings(token: string): Promise<NotificationSettings> {
+    const data = await fetchWithAuth(ENDPOINTS.USERS.NOTIFICATIONS, token);
+    return data.data?.settings || data.data;
+  },
+
+  // Update notification settings
+  async updateNotificationSettings(
+    token: string,
+    settings: UpdateNotificationSettings,
+  ): Promise<User> {
+    const data = await fetchWithAuth(ENDPOINTS.USERS.NOTIFICATIONS, token, {
+      method: "PUT",
+      body: JSON.stringify(settings),
     });
     return data.data?.user || data.data;
   },

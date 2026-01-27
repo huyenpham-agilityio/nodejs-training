@@ -1,10 +1,10 @@
 import { NotificationProvider } from './notification.provider';
-import { NotificationContext } from '../notification.types';
+import { NotificationContext, NotificationProviderType } from '../notification.types';
 import dayjs from 'dayjs';
 import { WebClient } from '@slack/web-api';
 
 export class SlackNotificationProvider extends NotificationProvider {
-  name = 'slack';
+  name = NotificationProviderType.SLACK;
   private client: WebClient | null = null;
   private channelId: string | null = null;
 

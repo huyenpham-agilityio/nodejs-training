@@ -2,6 +2,7 @@ import { UserRepository } from './user.repository';
 import { User } from './entities/User.entity';
 import { clerkClient } from '@clerk/express';
 import { MESSAGES } from '@/constants/messages';
+import { UpdateNotificationPreferences } from './user.types';
 
 /**
  * User Service
@@ -80,5 +81,49 @@ export class UserService {
     }
 
     return updated;
+  };
+
+  /**
+   * Update user notification settings
+   */
+  updateNotificationSettings = async (
+    clerkUserId: string,
+    settings: UpdateNotificationPreferences
+  ): Promise<User> => {
+    const user = await this.userRepository.findByClerkUserId(clerkUserId);
+
+    if (!user) {
+      throw new Error(MESSAGES.USER_NOT_FOUND);
+    }
+
+    const updated = await this.userRepository.update(user.id, settings);
+
+    if (!updated) {
+      throw new Error(MESSAGES.FAILED_UPDATE_USER);
+    }
+
+    return updated;
+  };
+
+  /**
+   * Get user notification settings
+   * Note: Console notifications are always enabled as a fallback, not exposed to users
+   */
+  getNotificationSettings = async (
+    clerkUserId: string
+  ): Promise<{
+    email_notifications_enabled: boolean;
+    slack_notifications_enabled: boolean;
+  }> => {
+    const user = await this.userRepository.findByClerkUserId(clerkUserId);
+
+    if (!user) {
+      throw new Error(MESSAGES.USER_NOT_FOUND);
+    }
+
+    return {
+      email_notifications_enabled: user.email_notifications_enabled,
+      slack_notifications_enabled: user.slack_notifications_enabled,
+    };
   };
 }

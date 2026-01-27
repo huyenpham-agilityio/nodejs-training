@@ -1,10 +1,10 @@
 import { NotificationProvider } from './notification.provider';
-import { NotificationContext } from '../notification.types';
+import { NotificationContext, NotificationProviderType } from '../notification.types';
 import nodemailer from 'nodemailer';
 import dayjs from 'dayjs';
 
 export class EmailNotificationProvider extends NotificationProvider {
-  name = 'email';
+  name = NotificationProviderType.EMAIL;
   private transporter: nodemailer.Transporter | null = null;
 
   constructor() {

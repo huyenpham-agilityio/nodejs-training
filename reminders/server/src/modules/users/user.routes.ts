@@ -15,4 +15,8 @@ router.use(requireAuth);
 // User routes
 router.get('/profile', userController.getUserProfile);
 
+// Notification settings routes
+router.get('/notifications', userController.getNotificationSettings);
+router.put('/notifications', userController.updateNotificationSettings);
+
 export default router;
