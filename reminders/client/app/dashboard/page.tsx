@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@clerk/nextjs";
 import ReminderModal from "@/components/ReminderModal";
-import StatsCards from "@/components/StatsCards";
+import StatsCards, { StatsCardsRef } from "@/components/StatsCards";
 import ReminderFilters from "@/components/ReminderFilters";
 import ReminderList from "@/components/ReminderList";
 import DashboardHeader from "@/components/DashboardHeader";
@@ -21,6 +21,8 @@ interface Reminder {
 }
 
 export default function DashboardPage() {
+  const statsRef = useRef<StatsCardsRef>(null);
+
   const {
     sortedReminders,
     filter,
@@ -43,6 +45,10 @@ export default function DashboardPage() {
     enablePagination: true,
     initialPage: 1,
     initialLimit: 10,
+    onRemindersChange: async () => {
+      // Refetch stats whenever reminders change
+      await statsRef.current?.refetchStats();
+    },
   });
   const { getToken, isLoaded, isSignedIn } = useAuth();
 
@@ -135,7 +141,7 @@ export default function DashboardPage() {
         <ErrorMessage message={error} />
 
         {/* Stats Cards */}
-        <StatsCards />
+        <StatsCards ref={statsRef} />
 
         {/* Filters */}
         <ReminderFilters

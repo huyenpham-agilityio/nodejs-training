@@ -1,6 +1,13 @@
 "use client";
 
-import { memo, useState, useEffect, useCallback } from "react";
+import {
+  memo,
+  useState,
+  useEffect,
+  useCallback,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import { useAuth } from "@clerk/nextjs";
 import { reminderApi } from "@/lib/api";
 
@@ -10,7 +17,18 @@ interface Stats {
   completed: number;
 }
 
-function StatsCards() {
+export interface StatsCardsRef {
+  refetchStats: () => Promise<void>;
+}
+
+interface StatsCardsProps {
+  onStatsChange?: (stats: Stats) => void;
+}
+
+function StatsCards(
+  { onStatsChange }: StatsCardsProps,
+  ref: React.Ref<StatsCardsRef>,
+) {
   const { getToken } = useAuth();
   const [stats, setStats] = useState<Stats>({
     total: 0,
@@ -26,12 +44,22 @@ function StatsCards() {
 
       const currentStats = await reminderApi.getStats(token);
       setStats(currentStats);
+      onStatsChange?.(currentStats);
     } catch (error) {
       console.error("Error fetching stats:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [getToken]);
+  }, [getToken, onStatsChange]);
+
+  // Expose refetchStats to parent component
+  useImperativeHandle(
+    ref,
+    () => ({
+      refetchStats: fetchStats,
+    }),
+    [fetchStats],
+  );
 
   useEffect(() => {
     fetchStats();
@@ -126,4 +154,4 @@ function StatsCards() {
   );
 }
 
-export default memo(StatsCards);
+export default memo(forwardRef(StatsCards));

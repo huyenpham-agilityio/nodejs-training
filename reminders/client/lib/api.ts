@@ -1,5 +1,5 @@
 // API configuration
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+import { API_BASE_URL, ENDPOINTS } from "@/constants/endpoints";
 
 export interface Reminder {
   id: number;
@@ -68,7 +68,7 @@ async function fetchWithAuth(
   token: string,
   options: RequestInit = {},
 ) {
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -99,7 +99,9 @@ export const reminderApi = {
     if (status) params.append("status", status);
 
     const queryString = params.toString();
-    const endpoint = queryString ? `/reminders?${queryString}` : "/reminders";
+    const endpoint = queryString
+      ? `${ENDPOINTS.REMINDERS.BASE}?${queryString}`
+      : ENDPOINTS.REMINDERS.BASE;
 
     const data = await fetchWithAuth(endpoint, token);
     return data.data?.reminders || [];
@@ -119,7 +121,7 @@ export const reminderApi = {
     if (search) params.append("search", search);
     if (status) params.append("status", status);
 
-    const endpoint = `/reminders?${params.toString()}`;
+    const endpoint = `${ENDPOINTS.REMINDERS.BASE}?${params.toString()}`;
     const data = await fetchWithAuth(endpoint, token);
 
     return {
@@ -137,13 +139,13 @@ export const reminderApi = {
 
   // Get reminder by ID
   async getById(token: string, id: number): Promise<Reminder> {
-    const data = await fetchWithAuth(`/reminders/${id}`, token);
+    const data = await fetchWithAuth(ENDPOINTS.REMINDERS.BY_ID(id), token);
     return data.data;
   },
 
   // Create reminder
   async create(token: string, reminder: CreateReminderData): Promise<Reminder> {
-    const data = await fetchWithAuth("/reminders", token, {
+    const data = await fetchWithAuth(ENDPOINTS.REMINDERS.BASE, token, {
       method: "POST",
       body: JSON.stringify(reminder),
     });
@@ -156,7 +158,7 @@ export const reminderApi = {
     id: number,
     updates: UpdateReminderData,
   ): Promise<Reminder> {
-    const data = await fetchWithAuth(`/reminders/${id}`, token, {
+    const data = await fetchWithAuth(ENDPOINTS.REMINDERS.BY_ID(id), token, {
       method: "PUT",
       body: JSON.stringify(updates),
     });
@@ -169,13 +171,13 @@ export const reminderApi = {
     active: number;
     completed: number;
   }> {
-    const data = await fetchWithAuth("/reminders/stats", token);
+    const data = await fetchWithAuth(ENDPOINTS.REMINDERS.STATS, token);
     return data.data?.stats || data.data;
   },
 
   // Delete reminder
   async delete(token: string, id: number): Promise<void> {
-    await fetchWithAuth(`/reminders/${id}`, token, {
+    await fetchWithAuth(ENDPOINTS.REMINDERS.BY_ID(id), token, {
       method: "DELETE",
     });
   },
@@ -184,13 +186,13 @@ export const reminderApi = {
 export const userApi = {
   // Get current user profile
   async getMe(token: string): Promise<User> {
-    const data = await fetchWithAuth("/users/me", token);
+    const data = await fetchWithAuth(ENDPOINTS.USERS.ME, token);
     return data.data?.user || data.data;
   },
 
   // Update user profile
   async updateProfile(token: string, updates: UpdateUserData): Promise<User> {
-    const data = await fetchWithAuth("/users/me", token, {
+    const data = await fetchWithAuth(ENDPOINTS.USERS.ME, token, {
       method: "PUT",
       body: JSON.stringify(updates),
     });

@@ -18,6 +18,7 @@ interface UseRemindersProps {
   enablePagination?: boolean;
   initialPage?: number;
   initialLimit?: number;
+  onRemindersChange?: () => void | Promise<void>;
 }
 
 export function useReminders({
@@ -25,6 +26,7 @@ export function useReminders({
   enablePagination = false,
   initialPage = 1,
   initialLimit = 10,
+  onRemindersChange,
 }: UseRemindersProps = {}) {
   const { getToken } = useAuth();
   const [reminders, setReminders] = useState<Reminder[]>(initialReminders);
@@ -117,6 +119,8 @@ export function useReminders({
         reminderData as CreateReminderData,
       );
       setReminders([...reminders, newReminder]);
+      // Trigger callback to update stats
+      await onRemindersChange?.();
       return newReminder;
     } catch (err) {
       console.error("Error creating reminder:", err);
@@ -141,6 +145,8 @@ export function useReminders({
 
       const updated = await reminderApi.update(token, id, reminderData);
       setReminders(reminders.map((r) => (r.id === id ? updated : r)));
+      // Trigger callback to update stats
+      await onRemindersChange?.();
       return updated;
     } catch (err) {
       console.error("Error updating reminder:", err);
@@ -159,6 +165,8 @@ export function useReminders({
 
       await reminderApi.delete(token, id);
       setReminders(reminders.filter((r) => r.id !== id));
+      // Trigger callback to update stats
+      await onRemindersChange?.();
     } catch (err) {
       console.error("Error deleting reminder:", err);
       setError(
