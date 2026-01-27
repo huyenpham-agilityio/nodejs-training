@@ -17,7 +17,7 @@ export class UserService {
    * Find or create user by Clerk ID
    * This is called when a user accesses the app to ensure they exist in the database
    */
-  async findOrCreateByClerkId(clerkUserId: string): Promise<User> {
+  findOrCreateByClerkId = async (clerkUserId: string): Promise<User> => {
     // First check if user exists in our database
     let user = await this.userRepository.findByClerkUserId(clerkUserId);
 
@@ -54,19 +54,19 @@ export class UserService {
         `${MESSAGES.FAILED_FETCH_USER_INFO}: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
-  }
+  };
 
   /**
    * Get user by Clerk ID
    */
-  async findByClerkId(clerkUserId: string): Promise<User | null> {
+  findByClerkId = async (clerkUserId: string): Promise<User | null> => {
     return this.userRepository.findByClerkUserId(clerkUserId);
-  }
+  };
 
   /**
    * Update user profile
    */
-  async update(clerkUserId: string, userData: Partial<User>): Promise<User> {
+  update = async (clerkUserId: string, userData: Partial<User>): Promise<User> => {
     const user = await this.userRepository.findByClerkUserId(clerkUserId);
 
     if (!user) {
@@ -80,5 +80,5 @@ export class UserService {
     }
 
     return updated;
-  }
+  };
 }

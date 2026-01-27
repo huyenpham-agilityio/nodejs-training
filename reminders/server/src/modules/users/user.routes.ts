@@ -13,6 +13,6 @@ const userController = new UserController(userService);
 router.use(requireAuth);
 
 // User routes
-router.get('/me', userController.getMe);
+router.get('/profile', userController.getUserProfile);
 
 export default router;

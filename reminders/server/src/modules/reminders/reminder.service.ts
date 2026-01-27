@@ -1,7 +1,6 @@
 import { ReminderRepository } from './reminder.repository';
 import { Reminder, ReminderStatus } from './entities/Reminder.entity';
 import { userRepository } from '@/modules/users/user.repository';
-import { clerkClient } from '@clerk/express';
 import { MESSAGES } from '@/constants/messages';
 import {
   scheduleNotificationJob,
@@ -9,18 +8,13 @@ import {
   rescheduleNotificationJob,
 } from '@/configs/queue';
 import dayjs from 'dayjs';
-
-export interface CreateReminderDTO {
-  title: string;
-  description?: string;
-  scheduled_at: Date | string;
-}
-
-export interface UpdateReminderDTO {
-  title?: string;
-  description?: string;
-  scheduled_at?: Date | string;
-}
+import {
+  CreateReminder,
+  UpdateReminder,
+  UserData,
+  PaginatedResult,
+  ReminderStats,
+} from './reminder.types';
 
 /**
  * Reminder Service
@@ -35,24 +29,24 @@ export class ReminderService {
   /**
    * Get all reminders for a user with optional filters
    */
-  async findByUserId(
+  findByUserId = async (
     userId: string,
     search?: string,
     status?: 'active' | 'completed'
-  ): Promise<Reminder[]> {
+  ): Promise<Reminder[]> => {
     return this.reminderRepository.findByUserId(userId, search, status);
-  }
+  };
 
   /**
    * Get reminders with pagination
    */
-  async findByUserIdPaginated(
+  findByUserIdPaginated = async (
     userId: string,
     page: number = 1,
     limit: number = 10,
     search?: string,
     status?: 'active' | 'completed'
-  ): Promise<{ reminders: Reminder[]; total: number }> {
+  ): Promise<PaginatedResult<Reminder>> => {
     // Validate and sanitize pagination parameters
     const validPage = Math.max(1, page);
     const validLimit = Math.min(Math.max(1, limit), 100); // Max 100 items per page
@@ -64,13 +58,13 @@ export class ReminderService {
       search,
       status
     );
-  }
+  };
 
   /**
    * Get a specific reminder by ID
    * Throws error if not found or doesn't belong to user
    */
-  async findById(id: number): Promise<Reminder> {
+  findById = async (id: number): Promise<Reminder> => {
     const reminder = await this.reminderRepository.findByIdWithUser(id);
 
     if (!reminder) {
@@ -78,38 +72,23 @@ export class ReminderService {
     }
 
     return reminder;
-  }
+  };
 
   /**
    * Create a new reminder
    */
-  async create(userId: string, reminderData: CreateReminderDTO): Promise<Reminder> {
-    // Validate required fields
-    if (!reminderData.title || !reminderData.scheduled_at) {
-      throw new Error(MESSAGES.REMINDER_TITLE_SCHEDULED_REQUIRED);
-    }
-
-    // Get user info from Clerk
-    let clerkUser;
-    try {
-      clerkUser = await clerkClient.users.getUser(userId);
-    } catch (error) {
-      console.error('Error fetching user from Clerk:', error);
-      throw new Error(MESSAGES.FAILED_FETCH_USER_INFO);
-    }
-
+  create = async (
+    userId: string,
+    reminderData: CreateReminder,
+    userData: UserData
+  ): Promise<Reminder> => {
     // Find or create user in database
     const user = await userRepository.findOrCreate(userId, {
-      email: clerkUser.emailAddresses[0]?.emailAddress || '',
-      name: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'User',
+      email: userData.email,
+      name: userData.name,
     });
 
-    // Validate scheduled time is in the future
     const scheduledAt = dayjs(reminderData.scheduled_at);
-
-    if (scheduledAt.isBefore(dayjs()) || scheduledAt.isSame(dayjs())) {
-      throw new Error(MESSAGES.REMINDER_FUTURE_DATE_REQUIRED);
-    }
 
     // Create reminder
     const reminder = await this.reminderRepository.create({
@@ -120,6 +99,7 @@ export class ReminderService {
       user: user,
     });
 
+    // Schedule notification job
     await scheduleNotificationJob(
       {
         reminder_id: reminder.id,
@@ -129,18 +109,14 @@ export class ReminderService {
     );
 
     return reminder;
-  }
+  };
 
   /**
    * Update a reminder
    */
-  async update(id: number, reminderData: UpdateReminderDTO): Promise<Reminder> {
-    // Verify ownership
+  update = async (id: number, reminderData: UpdateReminder): Promise<Reminder> => {
+    // Verify reminder exists
     const existing = await this.findById(id);
-
-    if (!existing) {
-      throw new Error(MESSAGES.REMINDER_NOT_FOUND);
-    }
 
     // Prepare update data
     const updateData: Partial<Reminder> = {};
@@ -154,13 +130,9 @@ export class ReminderService {
     }
 
     if (reminderData.scheduled_at !== undefined) {
-      const newScheduledAt = dayjs(
-        typeof reminderData.scheduled_at === 'string'
-          ? reminderData.scheduled_at
-          : reminderData.scheduled_at
-      );
+      const newScheduledAt = dayjs(reminderData.scheduled_at);
 
-      // Validate that new scheduled time is in the future if reminder is still pending
+      // Business rule: Validate that new scheduled time is in the future if reminder is still pending
       if (existing.status === ReminderStatus.PENDING && newScheduledAt.isBefore(dayjs())) {
         throw new Error(MESSAGES.REMINDER_FUTURE_DATE_REQUIRED);
       }
@@ -168,7 +140,7 @@ export class ReminderService {
       updateData.scheduled_at = newScheduledAt.toDate();
     }
 
-    // Update reminder
+    // Update reminder in database
     const updated = await this.reminderRepository.update(id, updateData);
 
     if (!updated) {
@@ -184,39 +156,33 @@ export class ReminderService {
         },
         updated.scheduled_at
       );
-      console.log(
-        `Rescheduled notification for reminder ID ${id} to ${dayjs(updated.scheduled_at).toISOString()}`
-      );
     }
 
     return updated;
-  }
+  };
 
   /**
    * Delete a reminder
    */
-  async delete(id: number): Promise<void> {
-    // Verify ownership
+  delete = async (id: number): Promise<void> => {
+    // Verify reminder exists
     await this.findById(id);
 
-    // Cancel scheduled notification job if exists
+    // Cancel scheduled notification job
     await cancelNotificationJob(id);
 
+    // Delete reminder from database
     const deleted = await this.reminderRepository.delete(id);
 
     if (!deleted) {
       throw new Error(MESSAGES.FAILED_DELETE_REMINDER);
     }
-  }
+  };
 
   /**
    * Get statistics for a user
    */
-  async getStats(userId: string): Promise<{
-    total: number;
-    active: number;
-    completed: number;
-  }> {
+  getStats = async (userId: string): Promise<ReminderStats> => {
     return this.reminderRepository.getStatsByUserId(userId);
-  }
+  };
 }

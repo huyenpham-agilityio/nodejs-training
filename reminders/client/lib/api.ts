@@ -185,14 +185,14 @@ export const reminderApi = {
 
 export const userApi = {
   // Get current user profile
-  async getMe(token: string): Promise<User> {
-    const data = await fetchWithAuth(ENDPOINTS.USERS.ME, token);
+  async getUserProfile(token: string): Promise<User> {
+    const data = await fetchWithAuth(ENDPOINTS.USERS.PROFILE, token);
     return data.data?.user || data.data;
   },
 
   // Update user profile
   async updateProfile(token: string, updates: UpdateUserData): Promise<User> {
-    const data = await fetchWithAuth(ENDPOINTS.USERS.ME, token, {
+    const data = await fetchWithAuth(ENDPOINTS.USERS.PROFILE, token, {
       method: "PUT",
       body: JSON.stringify(updates),
     });

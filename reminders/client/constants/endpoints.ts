@@ -11,7 +11,7 @@ export const REMINDER_ENDPOINTS = {
 
 // User endpoints
 export const USER_ENDPOINTS = {
-  ME: "/users/me",
+  PROFILE: "/users/profile",
 } as const;
 
 // All endpoints combined

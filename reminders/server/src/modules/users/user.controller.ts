@@ -16,10 +16,10 @@ export class UserController {
   }
   /**
    * Get current user profile
-   * @route GET /api/v1/users/me
+   * @route GET /api/v1/users/profile
    * @requires authentication via Clerk JWT
    */
-  getMe = async (req: Request, res: Response): Promise<void> => {
+  getUserProfile = async (req: Request, res: Response): Promise<void> => {
     try {
       const userId = req.auth?.userId;
 

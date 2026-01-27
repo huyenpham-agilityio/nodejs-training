@@ -2,20 +2,24 @@
  * Data Transfer Objects for Reminder endpoints
  */
 
-export interface CreateReminderDTO {
+export interface CreateReminder {
   title: string;
   description?: string;
   scheduled_at: Date | string;
 }
 
-export interface UpdateReminderDTO {
+export interface UpdateReminder {
   title?: string;
   description?: string;
   scheduled_at?: Date | string;
-  status?: string;
 }
 
-export interface ReminderResponseDTO {
+export interface UserData {
+  email: string;
+  name: string;
+}
+
+export interface ReminderResponse {
   id: number;
   title: string;
   description: string;
@@ -25,16 +29,20 @@ export interface ReminderResponseDTO {
   updated_at: Date;
 }
 
-export interface ReminderStatsDTO {
+export interface ReminderStats {
   total: number;
   active: number;
   completed: number;
-  cancelled: number;
 }
 
 export interface PaginationParams {
   page?: number;
   limit?: number;
+}
+
+export interface PaginatedResult<T> {
+  reminders: T[];
+  total: number;
 }
 
 export interface PaginatedResponse<T> {

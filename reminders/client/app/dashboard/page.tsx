@@ -68,7 +68,7 @@ export default function DashboardPage() {
         }
 
         console.log("Syncing user with backend...");
-        const userData = await userApi.getMe(token);
+        const userData = await userApi.getUserProfile(token);
         console.log("User synced successfully:", userData);
       } catch (error) {
         console.error("Error syncing user:", error);
