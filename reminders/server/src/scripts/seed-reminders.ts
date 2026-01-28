@@ -4,6 +4,7 @@ import AppDataSource from '@/configs/database';
 import { Reminder, ReminderStatus } from '@/modules/reminders/entities/Reminder.entity';
 import { User } from '@/modules/users/entities/User.entity';
 import dayjs from 'dayjs';
+import logger from '@/configs/logger';
 
 /**
  * Seed script to generate fake reminder data for testing pagination
@@ -112,13 +113,13 @@ function generateReminderDescription(): string {
 async function generateReminders(options: SeedOptions): Promise<void> {
   const { numberOfReminders, clerkUserId, userName, userEmail } = options;
 
-  console.log('🌱 Starting reminder seed process...');
-  console.log(`📝 Generating ${numberOfReminders} reminders for user: ${clerkUserId}`);
+  logger.info('🌱 Starting reminder seed process...');
+  logger.info(`📝 Generating ${numberOfReminders} reminders for user: ${clerkUserId}`);
 
   try {
     // Initialize database connection
     await AppDataSource.initialize();
-    console.log('✅ Database connection established');
+    logger.info('✅ Database connection established');
 
     const userRepository = AppDataSource.getRepository(User);
     const reminderRepository = AppDataSource.getRepository(Reminder);
@@ -129,16 +130,16 @@ async function generateReminders(options: SeedOptions): Promise<void> {
     });
 
     if (!user) {
-      console.log('👤 User not found, creating new user...');
+      logger.info('👤 User not found, creating new user...');
       user = userRepository.create({
         clerk_user_id: clerkUserId,
         name: userName || faker.person.fullName(),
         email: userEmail || faker.internet.email(),
       });
       await userRepository.save(user);
-      console.log(`✅ User created: ${user.name} (${user.email})`);
+      logger.info(`✅ User created: ${user.name} (${user.email})`);
     } else {
-      console.log(`✅ Found existing user: ${user.name} (${user.email})`);
+      logger.info(`✅ Found existing user: ${user.name} (${user.email})`);
     }
 
     // Generate reminders
@@ -164,7 +165,7 @@ async function generateReminders(options: SeedOptions): Promise<void> {
 
       // Show progress every 10 reminders
       if ((i + 1) % 10 === 0) {
-        console.log(`📝 Generated ${i + 1}/${numberOfReminders} reminders...`);
+        logger.info(`📝 Generated ${i + 1}/${numberOfReminders} reminders...`);
       }
     }
 
@@ -173,7 +174,7 @@ async function generateReminders(options: SeedOptions): Promise<void> {
     for (let i = 0; i < reminders.length; i += batchSize) {
       const batch = reminders.slice(i, i + batchSize);
       await reminderRepository.save(batch);
-      console.log(
+      logger.info(
         `💾 Saved batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(reminders.length / batchSize)}`
       );
     }
@@ -192,20 +193,20 @@ async function generateReminders(options: SeedOptions): Promise<void> {
       }),
     };
 
-    console.log('\n✨ Seed completed successfully!');
-    console.log('📊 Summary:');
-    console.log(`   Total reminders: ${stats.total}`);
-    console.log(`   Pending: ${stats.pending}`);
-    console.log(`   Notified: ${stats.notified}`);
-    console.log(`   Cancelled: ${stats.cancelled}`);
+    logger.info('\n✨ Seed completed successfully!');
+    logger.info('📊 Summary:');
+    logger.info(`   Total reminders: ${stats.total}`);
+    logger.info(`   Pending: ${stats.pending}`);
+    logger.info(`   Notified: ${stats.notified}`);
+    logger.info(`   Cancelled: ${stats.cancelled}`);
   } catch (error) {
-    console.error('❌ Error seeding reminders:', error);
+    logger.error('❌ Error seeding reminders:', error);
     throw error;
   } finally {
     // Close database connection
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy();
-      console.log('🔌 Database connection closed');
+      logger.info('🔌 Database connection closed');
     }
   }
 }
@@ -219,8 +220,8 @@ const main = async () => {
   const userName = args[2];
   const userEmail = args[3];
 
-  console.log('\n🚀 Reminder Seeder Script');
-  console.log('========================\n');
+  logger.info('\n🚀 Reminder Seeder Script');
+  logger.info('========================\n');
 
   await generateReminders({
     numberOfReminders,
@@ -229,11 +230,11 @@ const main = async () => {
     userEmail,
   });
 
-  console.log('\n✅ All done!\n');
+  logger.info('\n✅ All done!\n');
   process.exit(0);
 };
 
 main().catch((error) => {
-  console.error('Fatal error:', error);
+  logger.error('Fatal error:', error);
   process.exit(1);
 });

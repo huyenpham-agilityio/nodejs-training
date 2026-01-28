@@ -5,6 +5,7 @@ import { STATUS } from '@/constants/status';
 import { ReminderService } from '@/modules/reminders/reminder.service';
 import { clerkClient } from '@clerk/express';
 import { CreateReminder, UpdateReminder, UserData } from './reminder.types';
+import logger from '@/configs/logger';
 
 /**
  * Reminder Controller
@@ -112,7 +113,7 @@ export class ReminderController {
         });
       }
     } catch (error) {
-      console.error('Error fetching reminders:', error);
+      logger.error('Error fetching reminders:', error);
       res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
         status: STATUS.ERROR,
         message: MESSAGES.FAILED_FETCH_REMINDERS,
@@ -161,7 +162,7 @@ export class ReminderController {
         ? HTTP_STATUS_CODES.NOT_FOUND
         : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 
-      console.error('Error fetching reminder:', error);
+      logger.error('Error fetching reminder:', error);
       res.status(statusCode).json({
         status: STATUS.ERROR,
         message: errorMessage,
@@ -237,7 +238,7 @@ export class ReminderController {
       try {
         clerkUser = await clerkClient.users.getUser(userId);
       } catch (error) {
-        console.error('Error fetching user from Clerk:', error);
+        logger.error('Error fetching user from Clerk:', error);
         res.status(HTTP_STATUS_CODES.NOT_FOUND).json({
           status: STATUS.ERROR,
           message: MESSAGES.FAILED_FETCH_USER_INFO,
@@ -279,7 +280,7 @@ export class ReminderController {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : MESSAGES.FAILED_CREATE_REMINDER;
 
-      console.error('Error creating reminder:', error);
+      logger.error('Error creating reminder:', error);
       res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
         status: STATUS.ERROR,
         message: errorMessage,
@@ -378,7 +379,7 @@ export class ReminderController {
           ? HTTP_STATUS_CODES.BAD_REQUEST
           : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 
-      console.error('Error updating reminder:', error);
+      logger.error('Error updating reminder:', error);
       res.status(statusCode).json({
         status: STATUS.ERROR,
         message: errorMessage,
@@ -427,7 +428,7 @@ export class ReminderController {
         ? HTTP_STATUS_CODES.NOT_FOUND
         : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 
-      console.error('Error deleting reminder:', error);
+      logger.error('Error deleting reminder:', error);
       res.status(statusCode).json({
         status: STATUS.ERROR,
         message: errorMessage,
@@ -460,7 +461,7 @@ export class ReminderController {
         },
       });
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      logger.error('Error fetching stats:', error);
       res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
         status: STATUS.ERROR,
         message: MESSAGES.FAILED_FETCH_STATISTICS,

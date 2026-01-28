@@ -1,4 +1,5 @@
 import Redis from 'ioredis';
+import logger from './logger';
 
 export const redisConfig = {
   host: process.env.REDIS_HOST || 'localhost',
@@ -14,15 +15,15 @@ export const redisClient = new Redis(redisConfig);
 
 // Handle Redis connection events
 redisClient.on('connect', () => {
-  console.log('✓ Redis client connected');
+  logger.info('✓ Redis client connected');
 });
 
 redisClient.on('error', (err) => {
-  console.error('✗ Redis client error:', err);
+  logger.error('✗ Redis client error:', err);
 });
 
 redisClient.on('ready', () => {
-  console.log('✓ Redis client ready');
+  logger.info('✓ Redis client ready');
 });
 
 export default redisClient;

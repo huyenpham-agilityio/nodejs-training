@@ -9,6 +9,7 @@ import providerFactory, {
 import { Reminder } from '@/modules/reminders/entities/Reminder.entity';
 import reminderRepository, { ReminderRepository } from '@/modules/reminders/reminder.repository';
 import { User } from '@/modules/users/entities/User.entity';
+import logger from '@/configs/logger';
 
 export class NotificationService {
   private providerFactory: NotificationProviderFactory;
@@ -20,7 +21,7 @@ export class NotificationService {
 
   // This is a placeholder for the actual implementation
   sendNotification = async (reminder: Reminder, user: User) => {
-    console.log(`\n Processing notification for reminder: ${reminder.id}`);
+    logger.info(`\n Processing notification for reminder: ${reminder.id}`);
 
     const context: NotificationContext = {
       reminder_id: reminder.id,
@@ -38,7 +39,7 @@ export class NotificationService {
     for (const provider of allProviders) {
       // Check if provider is configured
       if (!provider.isConfigured()) {
-        console.log(`⊘ Provider ${provider.name} is not configured, skipping`);
+        logger.info(`⊘ Provider ${provider.name} is not configured, skipping`);
         continue;
       }
 
@@ -60,7 +61,7 @@ export class NotificationService {
       }
 
       if (!shouldSend) {
-        console.log(`⊘ User has disabled ${provider.name} notifications, skipping`);
+        logger.info(`⊘ User has disabled ${provider.name} notifications, skipping`);
         results.push({
           success: true,
           provider: provider.name,
@@ -88,7 +89,7 @@ export class NotificationService {
     const hasSuccessful = results.some((r) => r.success);
     if (hasSuccessful) {
       await this.reminderRepository.markAsNotified(reminder.id);
-      console.log(`✓ Reminder ${reminder.id} marked as notified`);
+      logger.info(`✓ Reminder ${reminder.id} marked as notified`);
     } else {
       throw new Error(`All notification attempts failed for reminder ${reminder.id}`);
     }
@@ -99,19 +100,19 @@ export class NotificationService {
       const reminder = await this.reminderRepository.findByIdWithUser(reminderId);
 
       if (!reminder) {
-        console.error(`Reminder with ID ${reminderId} not found.`);
+        logger.error(`Reminder with ID ${reminderId} not found.`);
         return;
       }
 
       const user = reminder.user;
       if (!user) {
-        console.error(`User for reminder ID ${reminderId} not found.`);
+        logger.error(`User for reminder ID ${reminderId} not found.`);
         return;
       }
 
       await this.sendNotification(reminder, user);
     } catch (error) {
-      console.error(`Error processing reminder notification for ID ${reminderId}:`, error);
+      logger.error(`Error processing reminder notification for ID ${reminderId}:`, error);
       throw error;
     }
   };

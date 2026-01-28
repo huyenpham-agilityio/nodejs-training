@@ -8,3 +8,5 @@ temp/
 .DS_Store
 dist/
 coverage/
+logs/
+*.log

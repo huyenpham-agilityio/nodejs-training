@@ -1,4 +1,5 @@
 import { NotificationContext } from '@/modules/notifications/notification.types';
+import logger from '@/configs/logger';
 
 export abstract class NotificationProvider {
   // Name of the notification provider
@@ -19,17 +20,18 @@ export abstract class NotificationProvider {
   /**
    * Log provider activity
    */
-  log(level: 'info' | 'error' | 'success', message: string, ...args: any[]): void {
+  log(level: 'info' | 'error' | 'success', message: string, ...args: unknown[]): void {
     const prefix = `[${this.name}]`;
+    const formattedMessage = `${prefix} ${message}`;
     switch (level) {
       case 'info':
-        console.log(`ℹ️  ${prefix}`, message, ...args);
+        logger.info(formattedMessage, ...args);
         break;
       case 'error':
-        console.error(`❌ ${prefix}`, message, ...args);
+        logger.error(formattedMessage, ...args);
         break;
       case 'success':
-        console.log(`✅ ${prefix}`, message, ...args);
+        logger.info(formattedMessage, ...args);
         break;
     }
   }

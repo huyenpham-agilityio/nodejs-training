@@ -8,6 +8,7 @@ import {
   rescheduleNotificationJob,
 } from '@/configs/queue';
 import dayjs from 'dayjs';
+import logger from '@/configs/logger';
 import {
   CreateReminder,
   UpdateReminder,
@@ -82,100 +83,123 @@ export class ReminderService {
     reminderData: CreateReminder,
     userData: UserData
   ): Promise<Reminder> => {
-    // Find or create user in database
-    const user = await userRepository.findOrCreate(userId, {
-      email: userData.email,
-      name: userData.name,
-    });
+    try {
+      // Find or create user in database
+      const user = await userRepository.findOrCreate(userId, {
+        email: userData.email,
+        name: userData.name,
+      });
 
-    const scheduledAt = dayjs(reminderData.scheduled_at);
+      const scheduledAt = dayjs(reminderData.scheduled_at);
 
-    // Create reminder
-    const reminder = await this.reminderRepository.create({
-      title: reminderData.title,
-      description: reminderData.description || '',
-      scheduled_at: scheduledAt.toDate(),
-      status: ReminderStatus.PENDING,
-      user: user,
-    });
+      // Create reminder
+      const reminder = await this.reminderRepository.create({
+        title: reminderData.title,
+        description: reminderData.description || '',
+        scheduled_at: scheduledAt.toDate(),
+        status: ReminderStatus.PENDING,
+        user: user,
+      });
 
-    // Schedule notification job
-    await scheduleNotificationJob(
-      {
-        reminder_id: reminder.id,
-        title: reminder.title,
-      },
-      reminder.scheduled_at
-    );
+      // Schedule notification job
+      await scheduleNotificationJob(
+        {
+          reminder_id: reminder.id,
+          title: reminder.title,
+        },
+        reminder.scheduled_at
+      );
 
-    return reminder;
+      logger.info(
+        `Reminder created: ID=${reminder.id}, User=${userId}, ScheduledAt=${scheduledAt.format()}`
+      );
+
+      return reminder;
+    } catch (error) {
+      logger.error(`Failed to create reminder for user ${userId}:`, error);
+      throw error;
+    }
   };
 
   /**
    * Update a reminder
    */
   update = async (id: number, reminderData: UpdateReminder): Promise<Reminder> => {
-    // Verify reminder exists
-    const existing = await this.findById(id);
+    try {
+      // Verify reminder exists
+      const existing = await this.findById(id);
 
-    // Prepare update data
-    const updateData: Partial<Reminder> = {};
+      // Prepare update data
+      const updateData: Partial<Reminder> = {};
 
-    if (reminderData.title !== undefined) {
-      updateData.title = reminderData.title;
-    }
-
-    if (reminderData.description !== undefined) {
-      updateData.description = reminderData.description;
-    }
-
-    if (reminderData.scheduled_at !== undefined) {
-      const newScheduledAt = dayjs(reminderData.scheduled_at);
-
-      // Business rule: Validate that new scheduled time is in the future if reminder is still pending
-      if (existing.status === ReminderStatus.PENDING && newScheduledAt.isBefore(dayjs())) {
-        throw new Error(MESSAGES.REMINDER_FUTURE_DATE_REQUIRED);
+      if (reminderData.title !== undefined) {
+        updateData.title = reminderData.title;
       }
 
-      updateData.scheduled_at = newScheduledAt.toDate();
+      if (reminderData.description !== undefined) {
+        updateData.description = reminderData.description;
+      }
+
+      if (reminderData.scheduled_at !== undefined) {
+        const newScheduledAt = dayjs(reminderData.scheduled_at);
+
+        // Business rule: Validate that new scheduled time is in the future if reminder is still pending
+        if (existing.status === ReminderStatus.PENDING && newScheduledAt.isBefore(dayjs())) {
+          throw new Error(MESSAGES.REMINDER_FUTURE_DATE_REQUIRED);
+        }
+
+        updateData.scheduled_at = newScheduledAt.toDate();
+      }
+
+      // Update reminder in database
+      const updated = await this.reminderRepository.update(id, updateData);
+
+      if (!updated) {
+        throw new Error(MESSAGES.FAILED_UPDATE_REMINDER);
+      }
+
+      // Reschedule notification if scheduled_at was updated and reminder is still pending
+      if (reminderData.scheduled_at && updated.status === ReminderStatus.PENDING) {
+        await rescheduleNotificationJob(
+          {
+            reminder_id: updated.id,
+            title: updated.title,
+          },
+          updated.scheduled_at
+        );
+      }
+
+      logger.info(`Reminder updated: ID=${id}, User=${existing.user.clerk_user_id}`);
+
+      return updated;
+    } catch (error) {
+      logger.error(`Failed to update reminder ${id}:`, error);
+      throw error;
     }
-
-    // Update reminder in database
-    const updated = await this.reminderRepository.update(id, updateData);
-
-    if (!updated) {
-      throw new Error(MESSAGES.FAILED_UPDATE_REMINDER);
-    }
-
-    // Reschedule notification if scheduled_at was updated and reminder is still pending
-    if (reminderData.scheduled_at && updated.status === ReminderStatus.PENDING) {
-      await rescheduleNotificationJob(
-        {
-          reminder_id: updated.id,
-          title: updated.title,
-        },
-        updated.scheduled_at
-      );
-    }
-
-    return updated;
   };
 
   /**
    * Delete a reminder
    */
   delete = async (id: number): Promise<void> => {
-    // Verify reminder exists
-    await this.findById(id);
+    try {
+      // Verify reminder exists
+      const reminder = await this.findById(id);
 
-    // Cancel scheduled notification job
-    await cancelNotificationJob(id);
+      // Cancel scheduled notification job
+      await cancelNotificationJob(id);
 
-    // Delete reminder from database
-    const deleted = await this.reminderRepository.delete(id);
+      // Delete reminder from database
+      const deleted = await this.reminderRepository.delete(id);
 
-    if (!deleted) {
-      throw new Error(MESSAGES.FAILED_DELETE_REMINDER);
+      if (!deleted) {
+        throw new Error(MESSAGES.FAILED_DELETE_REMINDER);
+      }
+
+      logger.info(`Reminder deleted: ID=${id}, User=${reminder.user.clerk_user_id}`);
+    } catch (error) {
+      logger.error(`Failed to delete reminder ${id}:`, error);
+      throw error;
     }
   };
 

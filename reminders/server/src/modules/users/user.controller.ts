@@ -4,6 +4,7 @@ import { MESSAGES } from '@/constants/messages';
 import { STATUS } from '@/constants/status';
 import { UserService } from './user.service';
 import { UpdateNotificationPreferences } from './user.types';
+import logger from '@/configs/logger';
 
 /**
  * User Controller
@@ -42,7 +43,7 @@ export class UserController {
         },
       });
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      logger.error('Error fetching user profile:', error);
 
       const errorMessage =
         error instanceof Error ? error.message : MESSAGES.FAILED_FETCH_USER_PROFILE;
@@ -80,7 +81,7 @@ export class UserController {
         },
       });
     } catch (error) {
-      console.error('Error fetching notification preferences:', error);
+      logger.error('Error fetching notification preferences:', error);
 
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to fetch notification settings';
@@ -149,7 +150,7 @@ export class UserController {
         message: 'Notification settings updated successfully',
       });
     } catch (error) {
-      console.error('Error updating notification settings:', error);
+      logger.error('Error updating notification settings:', error);
 
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to update notification settings';

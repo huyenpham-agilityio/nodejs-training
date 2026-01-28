@@ -2,6 +2,7 @@ import { Queue, QueueOptions } from 'bullmq';
 import { redisConfig } from './redis';
 import { NotificationJobData } from '@/modules/notifications/notification.types';
 import dayjs from 'dayjs';
+import logger from './logger';
 
 const queuePrefix = process.env.BULLMQ_PREFIX || 'reminders';
 
@@ -52,8 +53,8 @@ export const scheduleNotificationJob = async (
     priority: 1,
   });
 
-  console.log(`Added notification job for reminder ID ${data.reminder_id} to the queue`);
-  console.log(`Scheduled to run in ${actualDelay}ms (${dayjs(scheduledTime).toISOString()})`);
+  logger.info(`Added notification job for reminder ID ${data.reminder_id} to the queue`);
+  logger.debug(`Scheduled to run in ${actualDelay}ms (${dayjs(scheduledTime).toISOString()})`);
 };
 
 export const cancelNotificationJob = async (reminderId: number): Promise<void> => {
@@ -62,9 +63,9 @@ export const cancelNotificationJob = async (reminderId: number): Promise<void> =
 
   if (job) {
     await job.remove();
-    console.log(`Cancelled notification job for reminder ID ${reminderId}`);
+    logger.info(`Cancelled notification job for reminder ID ${reminderId}`);
   } else {
-    console.log(`No notification job found for reminder ID ${reminderId} to cancel`);
+    logger.debug(`No notification job found for reminder ID ${reminderId} to cancel`);
   }
 };
 
@@ -74,18 +75,18 @@ export const rescheduleNotificationJob = async (
 ): Promise<void> => {
   await cancelNotificationJob(data.reminder_id);
   await scheduleNotificationJob(data, newScheduledTime);
-  console.log(`Rescheduled notification job for reminder ID ${data.reminder_id}`);
+  logger.info(`Rescheduled notification job for reminder ID ${data.reminder_id}`);
 };
 
 notificationQueue.on('error', (error) => {
-  console.error('Notification Queue Error:', error);
+  logger.error('Notification Queue Error:', error);
 });
 
 notificationQueue.on('waiting', (jobId) => {
-  console.log(`Job ${jobId} is waiting to be processed`);
+  logger.debug(`Job ${jobId} is waiting to be processed`);
 });
 
 // Log when queue is ready
-console.log('✓ Notification queue initialized');
+logger.info('✓ Notification queue initialized');
 
 export default notificationQueue;
