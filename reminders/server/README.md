@@ -35,13 +35,34 @@ server/
 │   ├── interfaces/       # TypeScript interfaces
 │   ├── modules/          # Feature modules
 │   │   ├── auth/         # Authentication middleware
-│   │   ├── notifications/ # Notification services & workers
-│   │   │   ├── providers/ # Email, Slack, Console notification providers
-│   │   │   └── workers/   # Background job workers
-│   │   ├── reminders/    # Reminder CRUD operations
-│   │   │   └── entities/  # TypeORM entities
-│   │   └── users/        # User management
-│   │       └── entities/  # TypeORM entities
+│   │   │   └── auth.middleware.ts        # Clerk JWT authentication middleware
+│   │   ├── notifications/                # Notification services & workers
+│   │   │   ├── providers/                # Notification provider implementations
+│   │   │   │   ├── console.provider.ts   # Console logging provider (development)
+│   │   │   │   ├── email.provider.ts     # Email notification provider (Nodemailer)
+│   │   │   │   ├── notification.provider.ts  # Base notification provider interface
+│   │   │   │   ├── provider.factory.ts   # Provider factory pattern
+│   │   │   │   └── slack.provider.ts     # Slack notification provider
+│   │   │   ├── workers/                  # Background job workers
+│   │   │   │   └── notification.worker.ts  # BullMQ notification worker
+│   │   │   ├── notification.services.ts  # Notification business logic
+│   │   │   └── notification.types.ts     # Notification type definitions
+│   │   ├── reminders/                    # Reminder CRUD operations
+│   │   │   ├── entities/                 # TypeORM entities
+│   │   │   │   └── Reminder.entity.ts    # Reminder database model
+│   │   │   ├── reminder.controller.ts    # HTTP request handlers
+│   │   │   ├── reminder.repository.ts    # Data access layer
+│   │   │   ├── reminder.routes.ts        # API route definitions
+│   │   │   ├── reminder.service.ts       # Business logic
+│   │   │   └── reminder.types.ts         # Type definitions
+│   │   └── users/                        # User management
+│   │       ├── entities/                 # TypeORM entities
+│   │       │   └── User.entity.ts        # User database model
+│   │       ├── user.controller.ts        # HTTP request handlers
+│   │       ├── user.repository.ts        # Data access layer
+│   │       ├── user.routes.ts            # API route definitions
+│   │       ├── user.service.ts           # Business logic
+│   │       └── user.types.ts             # Type definitions
 │   ├── scripts/          # Utility scripts (seed, clear data)
 │   ├── types/            # TypeScript type definitions
 │   ├── utils/            # Utility functions
