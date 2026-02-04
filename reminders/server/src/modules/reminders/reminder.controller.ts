@@ -1,11 +1,17 @@
 import { Request, Response } from 'express';
 import { HTTP_STATUS_CODES } from '@/constants/http';
+import { ReminderService } from '@/modules/reminders/reminder.service';
 
 /**
  * Reminder Controller
  * Handles all reminder-related HTTP requests
  */
 export class ReminderController {
+  private reminderService;
+
+  constructor(reminderService: ReminderService) {
+    this.reminderService = reminderService;
+  }
   /**
    * Get all reminders for authenticated user
    * @route GET /api/v1/reminders
@@ -22,17 +28,16 @@ export class ReminderController {
         return;
       }
 
-      // TODO: Fetch reminders from database
-      // const reminders = await this.reminderService.findByUserId(userId);
+      const reminders = await this.reminderService.findByUserId(userId);
 
       res.status(HTTP_STATUS_CODES.OK).json({
         status: 'success',
         data: {
-          reminders: [],
-          message: 'Get reminders endpoint - to be implemented',
+          reminders,
         },
       });
     } catch (error) {
+      console.error('Error fetching reminders:', error);
       res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
         status: 'error',
         message: 'Failed to fetch reminders',
@@ -57,20 +62,24 @@ export class ReminderController {
         return;
       }
 
-      // TODO: Fetch reminder and verify ownership
-      // const reminder = await this.reminderService.findById(id, userId);
+      const reminder = await this.reminderService.findById(Number(id), userId);
 
       res.status(HTTP_STATUS_CODES.OK).json({
         status: 'success',
         data: {
-          id,
-          message: 'Get reminder by ID endpoint - to be implemented',
+          reminder,
         },
       });
     } catch (error) {
-      res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch reminder';
+      const statusCode = errorMessage.includes('not found')
+        ? HTTP_STATUS_CODES.NOT_FOUND
+        : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+
+      console.error('Error fetching reminder:', error);
+      res.status(statusCode).json({
         status: 'error',
-        message: 'Failed to fetch reminder',
+        message: errorMessage,
       });
     }
   };
@@ -91,19 +100,24 @@ export class ReminderController {
         return;
       }
 
-      // TODO: Create reminder in database
-      // const reminder = await this.reminderService.create(userId, req.body);
+      const reminder = await reminderService.create(userId, req.body);
 
       res.status(HTTP_STATUS_CODES.CREATED).json({
         status: 'success',
         data: {
-          message: 'Create reminder endpoint - to be implemented',
+          reminder,
         },
       });
     } catch (error) {
-      res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create reminder';
+      const statusCode = errorMessage.includes('required')
+        ? HTTP_STATUS_CODES.BAD_REQUEST
+        : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+
+      console.error('Error creating reminder:', error);
+      res.status(statusCode).json({
         status: 'error',
-        message: 'Failed to create reminder',
+        message: errorMessage,
       });
     }
   };
@@ -125,20 +139,24 @@ export class ReminderController {
         return;
       }
 
-      // TODO: Update reminder and verify ownership
-      // const reminder = await this.reminderService.update(id, userId, req.body);
+      const reminder = await reminderService.update(Number(id), userId, req.body);
 
       res.status(HTTP_STATUS_CODES.OK).json({
         status: 'success',
         data: {
-          id,
-          message: 'Update reminder endpoint - to be implemented',
+          reminder,
         },
       });
     } catch (error) {
-      res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update reminder';
+      const statusCode = errorMessage.includes('not found')
+        ? HTTP_STATUS_CODES.NOT_FOUND
+        : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+
+      console.error('Error updating reminder:', error);
+      res.status(statusCode).json({
         status: 'error',
-        message: 'Failed to update reminder',
+        message: errorMessage,
       });
     }
   };
@@ -160,20 +178,97 @@ export class ReminderController {
         return;
       }
 
-      // TODO: Delete reminder and verify ownership
-      // await this.reminderService.delete(id, userId);
+      await reminderService.delete(Number(id), userId);
 
       res.status(HTTP_STATUS_CODES.OK).json({
         status: 'success',
         data: {
-          id,
-          message: 'Delete reminder endpoint - to be implemented',
+          message: 'Reminder deleted successfully',
         },
       });
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete reminder';
+      const statusCode = errorMessage.includes('not found')
+        ? HTTP_STATUS_CODES.NOT_FOUND
+        : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+
+      console.error('Error deleting reminder:', error);
+      res.status(statusCode).json({
+        status: 'error',
+        message: errorMessage,
+      });
+    }
+  };
+
+  /**
+   * Toggle reminder completion
+   * @route PATCH /api/v1/reminders/:id/toggle
+   */
+  toggleComplete = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.auth?.userId;
+      const { id } = req.params;
+
+      if (!userId) {
+        res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
+          status: 'error',
+          message: 'Unauthorized',
+        });
+        return;
+      }
+
+      const reminder = await reminderService.toggleComplete(Number(id), userId);
+
+      res.status(HTTP_STATUS_CODES.OK).json({
+        status: 'success',
+        data: {
+          reminder,
+        },
+      });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to toggle reminder completion';
+      const statusCode = errorMessage.includes('not found')
+        ? HTTP_STATUS_CODES.NOT_FOUND
+        : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+
+      console.error('Error toggling reminder:', error);
+      res.status(statusCode).json({
+        status: 'error',
+        message: errorMessage,
+      });
+    }
+  };
+
+  /**
+   * Get statistics for user's reminders
+   * @route GET /api/v1/reminders/stats
+   */
+  getStats = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.auth?.userId;
+
+      if (!userId) {
+        res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
+          status: 'error',
+          message: 'Unauthorized',
+        });
+        return;
+      }
+
+      const stats = await reminderService.getStats(userId);
+
+      res.status(HTTP_STATUS_CODES.OK).json({
+        status: 'success',
+        data: {
+          stats,
+        },
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
       res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
         status: 'error',
-        message: 'Failed to delete reminder',
+        message: 'Failed to fetch statistics',
       });
     }
   };

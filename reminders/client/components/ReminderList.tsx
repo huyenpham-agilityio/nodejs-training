@@ -6,7 +6,7 @@ interface Reminder {
   id: number;
   title: string;
   description?: string;
-  reminder_time: string;
+  scheduled_at: string;
   is_completed: boolean;
 }
 
@@ -15,7 +15,7 @@ interface ReminderListProps {
   searchQuery: string;
   onEdit: (reminder: Reminder) => void;
   onDelete: (id: number) => void;
-  onToggleComplete: (id: number, isCompleted: boolean) => void;
+  onToggleComplete: (id: number) => void;
   onCreateClick: () => void;
 }
 

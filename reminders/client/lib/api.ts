@@ -1,12 +1,13 @@
 // API configuration
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || "v1";
 
 export interface Reminder {
   id: number;
   title: string;
   description?: string;
-  reminder_time: string;
+  scheduled_at: string;
+  status?: string;
   is_completed: boolean;
   created_at: string;
   updated_at: string;
@@ -15,14 +16,30 @@ export interface Reminder {
 export interface CreateReminderData {
   title: string;
   description?: string;
-  reminder_time: string;
+  scheduled_at: string;
 }
 
 export interface UpdateReminderData {
   title?: string;
   description?: string;
-  reminder_time?: string;
+  scheduled_at?: string;
   is_completed?: boolean;
+}
+
+export interface User {
+  id: number;
+  clerk_user_id: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpdateUserData {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
 }
 
 class ApiError extends Error {
@@ -37,7 +54,7 @@ async function fetchWithAuth(
   token: string,
   options: RequestInit = {}
 ) {
-  const response = await fetch(`${API_URL}/api/${API_VERSION}${endpoint}`, {
+  const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -75,7 +92,7 @@ export const reminderApi = {
       method: "POST",
       body: JSON.stringify(reminder),
     });
-    return data.data;
+    return data.data?.reminder || data.data;
   },
 
   // Update reminder
@@ -88,7 +105,26 @@ export const reminderApi = {
       method: "PUT",
       body: JSON.stringify(updates),
     });
-    return data.data;
+    return data.data?.reminder || data.data;
+  },
+
+  // Toggle reminder completion
+  async toggleComplete(token: string, id: number): Promise<Reminder> {
+    const data = await fetchWithAuth(`/reminders/${id}/toggle`, token, {
+      method: "PATCH",
+    });
+    return data.data?.reminder || data.data;
+  },
+
+  // Get statistics
+  async getStats(token: string): Promise<{
+    total: number;
+    active: number;
+    completed: number;
+    overdue: number;
+  }> {
+    const data = await fetchWithAuth("/reminders/stats", token);
+    return data.data?.stats || data.data;
   },
 
   // Delete reminder
@@ -96,5 +132,22 @@ export const reminderApi = {
     await fetchWithAuth(`/reminders/${id}`, token, {
       method: "DELETE",
     });
+  },
+};
+
+export const userApi = {
+  // Get current user profile
+  async getMe(token: string): Promise<User> {
+    const data = await fetchWithAuth("/users/me", token);
+    return data.data?.user || data.data;
+  },
+
+  // Update user profile
+  async updateProfile(token: string, updates: UpdateUserData): Promise<User> {
+    const data = await fetchWithAuth("/users/me", token, {
+      method: "PUT",
+      body: JSON.stringify(updates),
+    });
+    return data.data?.user || data.data;
   },
 };

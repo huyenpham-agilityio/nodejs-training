@@ -1,11 +1,17 @@
 import { Request, Response } from 'express';
 import { HTTP_STATUS_CODES } from '@/constants/http';
+import { UserService } from '@/modules/users/user.service';
 
 /**
  * User Controller
  * Handles all user-related HTTP requests
  */
 export class UserController {
+  private userService: UserService;
+
+  constructor(userService: UserService) {
+    this.userService = userService;
+  }
   /**
    * Get current user profile
    * @route GET /api/v1/users/me
@@ -23,16 +29,17 @@ export class UserController {
         return;
       }
 
-      // TODO: Fetch user from database using clerk_user_id
-      // const user = await this.userService.findByClerkId(userId);
+      // Find or create user in database
+      const user = await this.userService.findOrCreateByClerkId(userId);
 
       res.status(HTTP_STATUS_CODES.OK).json({
         status: 'success',
         data: {
-          clerk_user_id: userId,
+          user,
         },
       });
     } catch (error) {
+      console.error('Error fetching user profile:', error);
       res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
         status: 'error',
         message: 'Failed to fetch user profile',

@@ -7,45 +7,15 @@ import StatsCards from "@/components/StatsCards";
 import ReminderFilters from "@/components/ReminderFilters";
 import ReminderList from "@/components/ReminderList";
 import { useReminders } from "@/hooks/useReminders";
+import { userApi } from "@/lib/api";
 
 interface Reminder {
   id: number;
   title: string;
   description?: string;
-  reminder_time: string;
+  scheduled_at: string;
   is_completed: boolean;
 }
-
-// Mock data for UI demonstration
-const initialReminders: Reminder[] = [
-  {
-    id: 1,
-    title: "Team Meeting",
-    description: "Weekly sync with the development team",
-    reminder_time: "2026-01-16T10:00:00Z",
-    is_completed: false,
-  },
-  {
-    id: 2,
-    title: "Finish Project Proposal",
-    description: "Complete and submit the Q1 project proposal",
-    reminder_time: "2026-01-15T15:00:00Z",
-    is_completed: false,
-  },
-  {
-    id: 3,
-    title: "Doctor Appointment",
-    reminder_time: "2026-01-20T09:30:00Z",
-    is_completed: false,
-  },
-  {
-    id: 4,
-    title: "Buy Groceries",
-    description: "Milk, eggs, bread, and vegetables",
-    reminder_time: "2026-01-14T18:00:00Z",
-    is_completed: true,
-  },
-];
 
 export default function DashboardPage() {
   const {
@@ -59,7 +29,9 @@ export default function DashboardPage() {
     updateReminder,
     deleteReminder,
     toggleComplete,
-  } = useReminders({ initialReminders });
+    isLoading,
+    error,
+  } = useReminders();
   const { getToken, isLoaded, isSignedIn } = useAuth();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -67,25 +39,21 @@ export default function DashboardPage() {
 
   const fetchExternalData = useCallback(async () => {
     const token = await getToken();
+    if (!token) return;
 
-    // Fetch data from an external API
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/users/me`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    return response.json();
+    try {
+      // This will create the user in the database if they don't exist
+      const userData = await userApi.getMe(token);
+      console.log("User synced:", userData);
+    } catch (error) {
+      console.error("Error syncing user:", error);
+    }
   }, [getToken]);
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
-      fetchExternalData().then((data) => {
-        console.log("Fetched external data:", data);
-      });
+      // Sync user first to ensure they exist in the database
+      fetchExternalData();
     }
   }, [fetchExternalData, isLoaded, isSignedIn]);
 
@@ -99,19 +67,31 @@ export default function DashboardPage() {
     setIsModalOpen(true);
   };
 
-  const handleSave = (reminderData: Omit<Reminder, "id" | "is_completed">) => {
-    if (editingReminder) {
-      updateReminder(editingReminder.id, reminderData);
-    } else {
-      createReminder(reminderData);
+  const handleSave = async (
+    reminderData: Omit<Reminder, "id" | "is_completed">
+  ) => {
+    try {
+      if (editingReminder) {
+        await updateReminder(editingReminder.id, reminderData);
+      } else {
+        await createReminder(reminderData);
+      }
+      setIsModalOpen(false);
+      setEditingReminder(null);
+    } catch (error) {
+      console.error("Error saving reminder:", error);
+      // Error is already handled in the hook, but you could show a toast here
     }
-    setIsModalOpen(false);
-    setEditingReminder(null);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (confirm("Are you sure you want to delete this reminder?")) {
-      deleteReminder(id);
+      try {
+        await deleteReminder(id);
+      } catch (error) {
+        console.error("Error deleting reminder:", error);
+        // Error is already handled in the hook
+      }
     }
   };
 
@@ -132,8 +112,22 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
+        {/* Error Message */}
+        {error && (
+          <div className='mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg'>
+            <p className='text-red-400 text-sm'>{error}</p>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className='flex justify-center items-center py-12'>
+            <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500'></div>
+          </div>
+        )}
+
         {/* Stats Cards */}
-        <StatsCards {...stats} />
+        {!isLoading && <StatsCards {...stats} />}
 
         {/* Filters */}
         <ReminderFilters
