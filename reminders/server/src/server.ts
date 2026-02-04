@@ -10,6 +10,9 @@ import providerFactory from './modules/notifications/providers/provider.factory'
 // Load environment variables
 dotenv.config();
 
+// Initialize notification providers after env vars are loaded
+providerFactory.initialize();
+
 const PORT = process.env.PORT || 3000;
 
 // Initialize database connection

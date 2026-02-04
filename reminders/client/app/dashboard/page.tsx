@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@clerk/nextjs";
 import ReminderModal from "@/components/ReminderModal";
-import StatsCards from "@/components/StatsCards";
+import StatsCards, { StatsCardsRef } from "@/components/StatsCards";
 import ReminderFilters from "@/components/ReminderFilters";
 import ReminderList from "@/components/ReminderList";
 import DashboardHeader from "@/components/DashboardHeader";
 import ErrorMessage from "@/components/ErrorMessage";
+import Pagination from "@/components/Pagination";
 import { useReminders } from "@/hooks/useReminders";
 import { userApi } from "@/lib/api";
 
@@ -20,6 +21,8 @@ interface Reminder {
 }
 
 export default function DashboardPage() {
+  const statsRef = useRef<StatsCardsRef>(null);
+
   const {
     sortedReminders,
     filter,
@@ -30,7 +33,23 @@ export default function DashboardPage() {
     updateReminder,
     deleteReminder,
     error,
-  } = useReminders();
+    isLoading,
+    pagination,
+    page,
+    limit,
+    setLimit,
+    goToPage,
+    nextPage,
+    previousPage,
+  } = useReminders({
+    enablePagination: true,
+    initialPage: 1,
+    initialLimit: 10,
+    onRemindersChange: async () => {
+      // Refetch stats whenever reminders change
+      await statsRef.current?.refetchStats();
+    },
+  });
   const { getToken, isLoaded, isSignedIn } = useAuth();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,7 +68,7 @@ export default function DashboardPage() {
         }
 
         console.log("Syncing user with backend...");
-        const userData = await userApi.getMe(token);
+        const userData = await userApi.getUserProfile(token);
         console.log("User synced successfully:", userData);
       } catch (error) {
         console.error("Error syncing user:", error);
@@ -122,7 +141,7 @@ export default function DashboardPage() {
         <ErrorMessage message={error} />
 
         {/* Stats Cards */}
-        <StatsCards />
+        <StatsCards ref={statsRef} />
 
         {/* Filters */}
         <ReminderFilters
@@ -131,6 +150,12 @@ export default function DashboardPage() {
           filter={filter}
           onFilterChange={setFilter}
           onCreateClick={handleCreate}
+          showPaginationSettings={true}
+          pageLimit={limit}
+          onPageLimitChange={(newLimit) => {
+            setLimit(newLimit);
+            goToPage(1); // Reset to first page when changing limit
+          }}
         />
 
         {/* Reminders List */}
@@ -141,6 +166,28 @@ export default function DashboardPage() {
           onDelete={handleDelete}
           onCreateClick={handleCreate}
         />
+
+        {/* Pagination */}
+        {pagination && pagination.totalPages > 1 && (
+          <Pagination
+            currentPage={page}
+            totalPages={pagination.totalPages}
+            hasNextPage={pagination.hasNextPage}
+            hasPreviousPage={pagination.hasPreviousPage}
+            onPageChange={goToPage}
+            onNextPage={nextPage}
+            onPreviousPage={previousPage}
+            totalItems={pagination.total}
+            itemsPerPage={pagination.limit}
+          />
+        )}
+
+        {/* Loading Indicator */}
+        {isLoading && (
+          <div className='flex justify-center items-center py-8'>
+            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600'></div>
+          </div>
+        )}
       </main>
 
       {/* Modal */}

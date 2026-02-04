@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { reminderApi, CreateReminderData } from "@/lib/api";
+import { reminderApi, CreateReminderData, PaginationMetadata } from "@/lib/api";
 import dayjs from "dayjs";
 
 interface Reminder {
@@ -15,10 +15,18 @@ interface Reminder {
 
 interface UseRemindersProps {
   initialReminders?: Reminder[];
+  enablePagination?: boolean;
+  initialPage?: number;
+  initialLimit?: number;
+  onRemindersChange?: () => void | Promise<void>;
 }
 
 export function useReminders({
   initialReminders = [],
+  enablePagination = false,
+  initialPage = 1,
+  initialLimit = 10,
+  onRemindersChange,
 }: UseRemindersProps = {}) {
   const { getToken } = useAuth();
   const [reminders, setReminders] = useState<Reminder[]>(initialReminders);
@@ -26,6 +34,11 @@ export function useReminders({
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Pagination state
+  const [page, setPage] = useState(initialPage);
+  const [limit, setLimit] = useState(initialLimit);
+  const [pagination, setPagination] = useState<PaginationMetadata | null>(null);
 
   // Fetch reminders from API with filters
   const fetchReminders = useCallback(async () => {
@@ -39,8 +52,21 @@ export function useReminders({
       const statusParam = filter === "all" ? undefined : filter;
       const searchParam = searchQuery.trim() || undefined;
 
-      const data = await reminderApi.getAll(token, searchParam, statusParam);
-      setReminders(data);
+      if (enablePagination) {
+        const result = await reminderApi.getAllPaginated(
+          token,
+          page,
+          limit,
+          searchParam,
+          statusParam,
+        );
+        setReminders(result.reminders);
+        setPagination(result.pagination);
+      } else {
+        const data = await reminderApi.getAll(token, searchParam, statusParam);
+        setReminders(data);
+        setPagination(null);
+      }
     } catch (err) {
       console.error("Error fetching reminders:", err);
       setError(
@@ -49,7 +75,15 @@ export function useReminders({
     } finally {
       setIsLoading(false);
     }
-  }, [getToken, filter, searchQuery]);
+  }, [getToken, filter, searchQuery, enablePagination, page, limit]);
+
+  // Reset to page 1 when filters or search changes (only in pagination mode)
+  useEffect(() => {
+    if (enablePagination && page !== 1) {
+      setPage(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, searchQuery, enablePagination]);
 
   // Fetch reminders on mount and when filters change
   useEffect(() => {
@@ -85,6 +119,8 @@ export function useReminders({
         reminderData as CreateReminderData,
       );
       setReminders([...reminders, newReminder]);
+      // Trigger callback to update stats
+      await onRemindersChange?.();
       return newReminder;
     } catch (err) {
       console.error("Error creating reminder:", err);
@@ -109,6 +145,8 @@ export function useReminders({
 
       const updated = await reminderApi.update(token, id, reminderData);
       setReminders(reminders.map((r) => (r.id === id ? updated : r)));
+      // Trigger callback to update stats
+      await onRemindersChange?.();
       return updated;
     } catch (err) {
       console.error("Error updating reminder:", err);
@@ -127,6 +165,8 @@ export function useReminders({
 
       await reminderApi.delete(token, id);
       setReminders(reminders.filter((r) => r.id !== id));
+      // Trigger callback to update stats
+      await onRemindersChange?.();
     } catch (err) {
       console.error("Error deleting reminder:", err);
       setError(
@@ -149,5 +189,28 @@ export function useReminders({
     isLoading,
     error,
     refetch: fetchReminders,
+    // Pagination
+    pagination,
+    page,
+    setPage,
+    limit,
+    setLimit,
+    goToPage: (newPage: number) => {
+      if (enablePagination && pagination) {
+        if (newPage >= 1 && newPage <= pagination.totalPages) {
+          setPage(newPage);
+        }
+      }
+    },
+    nextPage: () => {
+      if (enablePagination && pagination?.hasNextPage) {
+        setPage((prev) => prev + 1);
+      }
+    },
+    previousPage: () => {
+      if (enablePagination && pagination?.hasPreviousPage) {
+        setPage((prev) => Math.max(1, prev - 1));
+      }
+    },
   };
 }

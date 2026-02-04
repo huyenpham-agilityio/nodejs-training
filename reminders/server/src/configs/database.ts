@@ -13,7 +13,7 @@ const AppDataSource = new DataSource({
   password: process.env.DB_PASSWORD || 'admin',
   database: process.env.DB_DATABASE || 'reminders_db',
   synchronize: isDevelopment,
-  logging: isDevelopment,
+  logging: false,
   entities: [User, Reminder],
 });
 

@@ -1,3 +1,9 @@
+export enum NotificationProviderType {
+  EMAIL = 'email',
+  SLACK = 'slack',
+  CONSOLE = 'console',
+}
+
 export interface NotificationContext {
   reminder_id: number;
   user_id: string;
@@ -18,4 +24,5 @@ export interface NotificationResult {
   success: boolean;
   provider: string;
   error?: string;
+  message?: string;
 }

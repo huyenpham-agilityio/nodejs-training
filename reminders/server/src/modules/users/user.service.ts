@@ -1,6 +1,8 @@
 import { UserRepository } from './user.repository';
 import { User } from './entities/User.entity';
 import { clerkClient } from '@clerk/express';
+import { MESSAGES } from '@/constants/messages';
+import { UpdateNotificationPreferences } from './user.types';
 
 /**
  * User Service
@@ -16,7 +18,7 @@ export class UserService {
    * Find or create user by Clerk ID
    * This is called when a user accesses the app to ensure they exist in the database
    */
-  async findOrCreateByClerkId(clerkUserId: string): Promise<User> {
+  findOrCreateByClerkId = async (clerkUserId: string): Promise<User> => {
     // First check if user exists in our database
     let user = await this.userRepository.findByClerkUserId(clerkUserId);
 
@@ -30,7 +32,7 @@ export class UserService {
 
       const email = clerkUser.emailAddresses[0]?.emailAddress;
       if (!email) {
-        throw new Error('User email not found in Clerk');
+        throw new Error(MESSAGES.USER_EMAIL_NOT_FOUND);
       }
 
       user = await this.userRepository.create({
@@ -50,34 +52,78 @@ export class UserService {
       }
 
       throw new Error(
-        `Failed to fetch user information: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `${MESSAGES.FAILED_FETCH_USER_INFO}: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
-  }
+  };
 
   /**
    * Get user by Clerk ID
    */
-  async findByClerkId(clerkUserId: string): Promise<User | null> {
+  findByClerkId = async (clerkUserId: string): Promise<User | null> => {
     return this.userRepository.findByClerkUserId(clerkUserId);
-  }
+  };
 
   /**
    * Update user profile
    */
-  async update(clerkUserId: string, userData: Partial<User>): Promise<User> {
+  update = async (clerkUserId: string, userData: Partial<User>): Promise<User> => {
     const user = await this.userRepository.findByClerkUserId(clerkUserId);
 
     if (!user) {
-      throw new Error('User not found');
+      throw new Error(MESSAGES.USER_NOT_FOUND);
     }
 
     const updated = await this.userRepository.update(user.id, userData);
 
     if (!updated) {
-      throw new Error('Failed to update user');
+      throw new Error(MESSAGES.FAILED_UPDATE_USER);
     }
 
     return updated;
-  }
+  };
+
+  /**
+   * Update user notification settings
+   */
+  updateNotificationSettings = async (
+    clerkUserId: string,
+    settings: UpdateNotificationPreferences
+  ): Promise<User> => {
+    const user = await this.userRepository.findByClerkUserId(clerkUserId);
+
+    if (!user) {
+      throw new Error(MESSAGES.USER_NOT_FOUND);
+    }
+
+    const updated = await this.userRepository.update(user.id, settings);
+
+    if (!updated) {
+      throw new Error(MESSAGES.FAILED_UPDATE_USER);
+    }
+
+    return updated;
+  };
+
+  /**
+   * Get user notification settings
+   * Note: Console notifications are always enabled as a fallback, not exposed to users
+   */
+  getNotificationSettings = async (
+    clerkUserId: string
+  ): Promise<{
+    email_notifications_enabled: boolean;
+    slack_notifications_enabled: boolean;
+  }> => {
+    const user = await this.userRepository.findByClerkUserId(clerkUserId);
+
+    if (!user) {
+      throw new Error(MESSAGES.USER_NOT_FOUND);
+    }
+
+    return {
+      email_notifications_enabled: user.email_notifications_enabled,
+      slack_notifications_enabled: user.slack_notifications_enabled,
+    };
+  };
 }

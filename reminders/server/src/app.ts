@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import 'reflect-metadata';
 import { clerkMiddleware } from '@clerk/express';
 import { HTTP_STATUS_CODES } from '@/constants/http';
+import { MESSAGES } from '@/constants/messages';
+import { STATUS } from '@/constants/status';
 import userRoutes from '@/modules/users/user.routes';
 import reminderRoutes from '@/modules/reminders/reminder.routes';
 import dayjs from 'dayjs';
@@ -33,8 +35,8 @@ app.use(clerkMiddleware());
 // Health check endpoint (no auth required)
 app.get('/health', (_req: Request, res: Response) => {
   res.status(HTTP_STATUS_CODES.OK).json({
-    status: 'success',
-    message: 'Server is healthy',
+    status: STATUS.SUCCESS,
+    message: MESSAGES.SERVER_HEALTHY,
     timestamp: dayjs().toISOString(),
   });
 });
@@ -47,8 +49,8 @@ app.use(`/api/${API_VERSION}/reminders`, reminderRoutes);
 // 404 handler
 app.use((_req: Request, res: Response) => {
   res.status(HTTP_STATUS_CODES.NOT_FOUND).json({
-    status: 'error',
-    message: 'Route not found',
+    status: STATUS.ERROR,
+    message: MESSAGES.ROUTE_NOT_FOUND,
   });
 });
 

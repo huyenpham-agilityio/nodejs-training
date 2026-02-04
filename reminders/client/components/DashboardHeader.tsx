@@ -2,6 +2,7 @@
 
 import { memo } from "react";
 import { UserButton } from "@clerk/nextjs";
+import Link from "next/link";
 
 interface DashboardHeaderProps {
   className?: string;
@@ -18,7 +19,15 @@ function DashboardHeader({ className }: DashboardHeaderProps) {
             <span className='text-3xl'>📝</span>
             <h1 className='text-2xl font-bold text-white'>H-Reminders</h1>
           </div>
-          <UserButton afterSignOutUrl='/' />
+          <div className='flex items-center gap-4'>
+            <Link
+              href='/settings'
+              className='text-gray-300 hover:text-white transition-colors font-medium'
+            >
+              Settings
+            </Link>
+            <UserButton afterSignOutUrl='/' />
+          </div>
         </div>
       </div>
     </header>

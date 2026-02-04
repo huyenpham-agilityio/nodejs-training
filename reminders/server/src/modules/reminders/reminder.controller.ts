@@ -1,6 +1,10 @@
 import { Request, Response } from 'express';
 import { HTTP_STATUS_CODES } from '@/constants/http';
+import { MESSAGES } from '@/constants/messages';
+import { STATUS } from '@/constants/status';
 import { ReminderService } from '@/modules/reminders/reminder.service';
+import { clerkClient } from '@clerk/express';
+import { CreateReminder, UpdateReminder, UserData } from './reminder.types';
 
 /**
  * Reminder Controller
@@ -14,7 +18,7 @@ export class ReminderController {
   }
   /**
    * Get all reminders for authenticated user
-   * @route GET /api/v1/reminders?search=text&status=active|completed
+   * @route GET /api/v1/reminders?search=text&status=active|completed&page=1&limit=10
    */
   getAllReminders = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -22,34 +26,96 @@ export class ReminderController {
 
       if (!userId) {
         res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
-          status: 'error',
-          message: 'Unauthorized',
+          status: STATUS.ERROR,
+          message: MESSAGES.UNAUTHORIZED,
         });
         return;
       }
 
-      const { search, status } = req.query;
+      const { search, status, page, limit } = req.query;
 
       // Validate status parameter
+      if (status !== undefined && status !== 'active' && status !== 'completed') {
+        res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
+          status: STATUS.ERROR,
+          message: MESSAGES.INVALID_STATUS_PARAMETER,
+        });
+        return;
+      }
+
       const validStatus = status === 'active' || status === 'completed' ? status : undefined;
 
-      const reminders = await this.reminderService.findByUserId(
-        userId,
-        search as string | undefined,
-        validStatus
-      );
+      // Check if pagination is requested
+      const shouldPaginate = page !== undefined || limit !== undefined;
 
-      res.status(HTTP_STATUS_CODES.OK).json({
-        status: 'success',
-        data: {
-          reminders,
-        },
-      });
+      if (shouldPaginate) {
+        const pageNumber = parseInt(page as string);
+        const limitNumber = parseInt(limit as string);
+
+        // Validate pagination parameters
+        if (page !== undefined && (isNaN(pageNumber) || pageNumber < 1)) {
+          res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
+            status: STATUS.ERROR,
+            message: MESSAGES.PAGE_MUST_BE_POSITIVE,
+          });
+          return;
+        }
+
+        if (limit !== undefined && (isNaN(limitNumber) || limitNumber < 1 || limitNumber > 100)) {
+          res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
+            status: STATUS.ERROR,
+            message: MESSAGES.LIMIT_MUST_BE_VALID,
+          });
+          return;
+        }
+
+        const validPage = pageNumber || 1;
+        const validLimit = limitNumber || 10;
+
+        const { reminders, total } = await this.reminderService.findByUserIdPaginated(
+          userId,
+          validPage,
+          validLimit,
+          search as string | undefined,
+          validStatus
+        );
+
+        const totalPages = Math.ceil(total / validLimit);
+
+        res.status(HTTP_STATUS_CODES.OK).json({
+          status: STATUS.SUCCESS,
+          data: {
+            reminders,
+          },
+          pagination: {
+            page: validPage,
+            limit: validLimit,
+            total,
+            totalPages,
+            hasNextPage: validPage < totalPages,
+            hasPreviousPage: validPage > 1,
+          },
+        });
+      } else {
+        // Return all reminders without pagination (backward compatibility)
+        const reminders = await this.reminderService.findByUserId(
+          userId,
+          search as string | undefined,
+          validStatus
+        );
+
+        res.status(HTTP_STATUS_CODES.OK).json({
+          status: STATUS.SUCCESS,
+          data: {
+            reminders,
+          },
+        });
+      }
     } catch (error) {
       console.error('Error fetching reminders:', error);
       res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-        status: 'error',
-        message: 'Failed to fetch reminders',
+        status: STATUS.ERROR,
+        message: MESSAGES.FAILED_FETCH_REMINDERS,
       });
     }
   };
@@ -65,29 +131,39 @@ export class ReminderController {
 
       if (!userId) {
         res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
-          status: 'error',
-          message: 'Unauthorized',
+          status: STATUS.ERROR,
+          message: MESSAGES.UNAUTHORIZED,
         });
         return;
       }
 
-      const reminder = await this.reminderService.findById(Number(id));
+      // Validate ID
+      const reminderId = parseInt(id);
+      if (isNaN(reminderId) || reminderId <= 0) {
+        res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
+          status: STATUS.ERROR,
+          message: MESSAGES.INVALID_REMINDER_ID,
+        });
+        return;
+      }
+
+      const reminder = await this.reminderService.findById(reminderId);
 
       res.status(HTTP_STATUS_CODES.OK).json({
-        status: 'success',
+        status: STATUS.SUCCESS,
         data: {
           reminder,
         },
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch reminder';
+      const errorMessage = error instanceof Error ? error.message : MESSAGES.FAILED_FETCH_REMINDER;
       const statusCode = errorMessage.includes('not found')
         ? HTTP_STATUS_CODES.NOT_FOUND
         : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 
       console.error('Error fetching reminder:', error);
       res.status(statusCode).json({
-        status: 'error',
+        status: STATUS.ERROR,
         message: errorMessage,
       });
     }
@@ -103,29 +179,109 @@ export class ReminderController {
 
       if (!userId) {
         res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
-          status: 'error',
-          message: 'Unauthorized',
+          status: STATUS.ERROR,
+          message: MESSAGES.UNAUTHORIZED,
         });
         return;
       }
 
-      const reminder = await this.reminderService.create(userId, req.body);
+      // Validate request body
+      const { title, description, scheduled_at } = req.body;
+
+      if (!title || typeof title !== 'string' || title.trim() === '') {
+        res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
+          status: STATUS.ERROR,
+          message: MESSAGES.TITLE_REQUIRED,
+        });
+        return;
+      }
+
+      if (!scheduled_at) {
+        res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
+          status: STATUS.ERROR,
+          message: MESSAGES.SCHEDULED_DATE_REQUIRED,
+        });
+        return;
+      }
+
+      // Validate scheduled_at is a valid date
+      const scheduledDate = new Date(scheduled_at);
+      if (isNaN(scheduledDate.getTime())) {
+        res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
+          status: STATUS.ERROR,
+          message: MESSAGES.INVALID_SCHEDULED_DATE_FORMAT,
+        });
+        return;
+      }
+
+      // Validate scheduled date is in the future
+      if (scheduledDate <= new Date()) {
+        res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
+          status: STATUS.ERROR,
+          message: MESSAGES.REMINDER_FUTURE_DATE_REQUIRED,
+        });
+        return;
+      }
+
+      // Validate description if provided
+      if (description !== undefined && typeof description !== 'string') {
+        res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
+          status: STATUS.ERROR,
+          message: MESSAGES.DESCRIPTION_MUST_BE_STRING,
+        });
+        return;
+      }
+
+      // Get user info from Clerk
+      let clerkUser;
+      try {
+        clerkUser = await clerkClient.users.getUser(userId);
+      } catch (error) {
+        console.error('Error fetching user from Clerk:', error);
+        res.status(HTTP_STATUS_CODES.NOT_FOUND).json({
+          status: STATUS.ERROR,
+          message: MESSAGES.FAILED_FETCH_USER_INFO,
+        });
+        return;
+      }
+
+      // Extract user data
+      const userEmail = clerkUser.emailAddresses[0]?.emailAddress;
+      const userName = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'User';
+
+      if (!userEmail) {
+        res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
+          status: STATUS.ERROR,
+          message: MESSAGES.USER_EMAIL_NOT_FOUND,
+        });
+        return;
+      }
+
+      const reminderData: CreateReminder = {
+        title: title.trim(),
+        description: description?.trim(),
+        scheduled_at: scheduledDate,
+      };
+
+      const userData: UserData = {
+        email: userEmail,
+        name: userName,
+      };
+
+      const reminder = await this.reminderService.create(userId, reminderData, userData);
 
       res.status(HTTP_STATUS_CODES.CREATED).json({
-        status: 'success',
+        status: STATUS.SUCCESS,
         data: {
           reminder,
         },
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create reminder';
-      const statusCode = errorMessage.includes('required')
-        ? HTTP_STATUS_CODES.BAD_REQUEST
-        : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+      const errorMessage = error instanceof Error ? error.message : MESSAGES.FAILED_CREATE_REMINDER;
 
       console.error('Error creating reminder:', error);
-      res.status(statusCode).json({
-        status: 'error',
+      res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        status: STATUS.ERROR,
         message: errorMessage,
       });
     }
@@ -142,29 +298,89 @@ export class ReminderController {
 
       if (!userId) {
         res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
-          status: 'error',
-          message: 'Unauthorized',
+          status: STATUS.ERROR,
+          message: MESSAGES.UNAUTHORIZED,
         });
         return;
       }
 
-      const reminder = await this.reminderService.update(Number(id), req.body);
+      // Validate ID
+      const reminderId = parseInt(id);
+      if (isNaN(reminderId) || reminderId <= 0) {
+        res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
+          status: STATUS.ERROR,
+          message: MESSAGES.INVALID_REMINDER_ID,
+        });
+        return;
+      }
+
+      // Validate request body
+      const { title, description, scheduled_at } = req.body;
+
+      // Check if at least one field is being updated
+      if (title === undefined && description === undefined && scheduled_at === undefined) {
+        res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
+          status: STATUS.ERROR,
+          message: MESSAGES.AT_LEAST_ONE_FIELD_REQUIRED,
+        });
+        return;
+      }
+
+      // Validate title if provided
+      if (title !== undefined && (typeof title !== 'string' || title.trim() === '')) {
+        res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
+          status: STATUS.ERROR,
+          message: MESSAGES.TITLE_MUST_BE_NON_EMPTY,
+        });
+        return;
+      }
+
+      // Validate description if provided
+      if (description !== undefined && typeof description !== 'string') {
+        res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
+          status: STATUS.ERROR,
+          message: MESSAGES.DESCRIPTION_MUST_BE_STRING,
+        });
+        return;
+      }
+
+      // Validate scheduled_at if provided
+      let scheduledDate: Date | undefined;
+      if (scheduled_at !== undefined) {
+        scheduledDate = new Date(scheduled_at);
+        if (isNaN(scheduledDate.getTime())) {
+          res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
+            status: STATUS.ERROR,
+            message: MESSAGES.INVALID_SCHEDULED_DATE_FORMAT,
+          });
+          return;
+        }
+      }
+
+      const updateData: UpdateReminder = {};
+      if (title !== undefined) updateData.title = title.trim();
+      if (description !== undefined) updateData.description = description.trim();
+      if (scheduledDate !== undefined) updateData.scheduled_at = scheduledDate;
+
+      const reminder = await this.reminderService.update(reminderId, updateData);
 
       res.status(HTTP_STATUS_CODES.OK).json({
-        status: 'success',
+        status: STATUS.SUCCESS,
         data: {
           reminder,
         },
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update reminder';
+      const errorMessage = error instanceof Error ? error.message : MESSAGES.FAILED_UPDATE_REMINDER;
       const statusCode = errorMessage.includes('not found')
         ? HTTP_STATUS_CODES.NOT_FOUND
-        : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+        : errorMessage.includes('future') || errorMessage.includes('date')
+          ? HTTP_STATUS_CODES.BAD_REQUEST
+          : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 
       console.error('Error updating reminder:', error);
       res.status(statusCode).json({
-        status: 'error',
+        status: STATUS.ERROR,
         message: errorMessage,
       });
     }
@@ -181,29 +397,39 @@ export class ReminderController {
 
       if (!userId) {
         res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
-          status: 'error',
-          message: 'Unauthorized',
+          status: STATUS.ERROR,
+          message: MESSAGES.UNAUTHORIZED,
         });
         return;
       }
 
-      await this.reminderService.delete(Number(id));
+      // Validate ID
+      const reminderId = parseInt(id);
+      if (isNaN(reminderId) || reminderId <= 0) {
+        res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
+          status: STATUS.ERROR,
+          message: MESSAGES.INVALID_REMINDER_ID,
+        });
+        return;
+      }
+
+      await this.reminderService.delete(reminderId);
 
       res.status(HTTP_STATUS_CODES.OK).json({
-        status: 'success',
+        status: STATUS.SUCCESS,
         data: {
-          message: 'Reminder deleted successfully',
+          message: MESSAGES.REMINDER_DELETED_SUCCESS,
         },
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to delete reminder';
+      const errorMessage = error instanceof Error ? error.message : MESSAGES.FAILED_DELETE_REMINDER;
       const statusCode = errorMessage.includes('not found')
         ? HTTP_STATUS_CODES.NOT_FOUND
         : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 
       console.error('Error deleting reminder:', error);
       res.status(statusCode).json({
-        status: 'error',
+        status: STATUS.ERROR,
         message: errorMessage,
       });
     }
@@ -219,8 +445,8 @@ export class ReminderController {
 
       if (!userId) {
         res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
-          status: 'error',
-          message: 'Unauthorized',
+          status: STATUS.ERROR,
+          message: MESSAGES.UNAUTHORIZED,
         });
         return;
       }
@@ -228,7 +454,7 @@ export class ReminderController {
       const stats = await this.reminderService.getStats(userId);
 
       res.status(HTTP_STATUS_CODES.OK).json({
-        status: 'success',
+        status: STATUS.SUCCESS,
         data: {
           stats,
         },
@@ -236,8 +462,8 @@ export class ReminderController {
     } catch (error) {
       console.error('Error fetching stats:', error);
       res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-        status: 'error',
-        message: 'Failed to fetch statistics',
+        status: STATUS.ERROR,
+        message: MESSAGES.FAILED_FETCH_STATISTICS,
       });
     }
   };

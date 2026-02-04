@@ -1,6 +1,7 @@
 import {
   NotificationContext,
   NotificationResult,
+  NotificationProviderType,
 } from '@/modules/notifications/notification.types';
 import providerFactory, {
   NotificationProviderFactory,
@@ -35,20 +36,52 @@ export class NotificationService {
 
     const allProviders = this.providerFactory.getAllProviders();
     for (const provider of allProviders) {
-      if (provider.isConfigured()) {
-        try {
-          await provider.send(context);
-          results.push({
-            success: true,
-            provider: provider.name,
-          });
-        } catch (error) {
-          results.push({
-            success: false,
-            provider: provider.name,
-            error: (error as Error).message,
-          });
-        }
+      // Check if provider is configured
+      if (!provider.isConfigured()) {
+        console.log(`⊘ Provider ${provider.name} is not configured, skipping`);
+        continue;
+      }
+
+      // Check user's notification settings
+      // Console notifications are always enabled as a fallback
+      let shouldSend = false;
+      switch (provider.name.toLowerCase()) {
+        case NotificationProviderType.EMAIL:
+          shouldSend = user.email_notifications_enabled;
+          break;
+        case NotificationProviderType.SLACK:
+          shouldSend = user.slack_notifications_enabled;
+          break;
+        case NotificationProviderType.CONSOLE:
+          shouldSend = true; // Always enabled as fallback
+          break;
+        default:
+          shouldSend = true; // Unknown providers default to enabled
+      }
+
+      if (!shouldSend) {
+        console.log(`⊘ User has disabled ${provider.name} notifications, skipping`);
+        results.push({
+          success: true,
+          provider: provider.name,
+          message: 'Skipped - user preference',
+        });
+        continue;
+      }
+
+      // Send notification
+      try {
+        await provider.send(context);
+        results.push({
+          success: true,
+          provider: provider.name,
+        });
+      } catch (error) {
+        results.push({
+          success: false,
+          provider: provider.name,
+          error: (error as Error).message,
+        });
       }
     }
 

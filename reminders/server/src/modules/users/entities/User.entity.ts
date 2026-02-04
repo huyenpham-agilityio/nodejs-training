@@ -22,6 +22,15 @@ export class User {
   @Column({ unique: true })
   email: string;
 
+  @Column({ type: 'boolean', default: true })
+  email_notifications_enabled: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  slack_notifications_enabled: boolean;
+
+  @Column({ type: 'boolean', default: true })
+  console_notifications_enabled: boolean;
+
   @CreateDateColumn()
   created_at: Date;
 

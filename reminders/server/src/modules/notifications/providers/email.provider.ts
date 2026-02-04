@@ -1,10 +1,10 @@
 import { NotificationProvider } from './notification.provider';
-import { NotificationContext } from '../notification.types';
+import { NotificationContext, NotificationProviderType } from '../notification.types';
 import nodemailer from 'nodemailer';
 import dayjs from 'dayjs';
 
 export class EmailNotificationProvider extends NotificationProvider {
-  name = 'email';
+  name = NotificationProviderType.EMAIL;
   private transporter: nodemailer.Transporter | null = null;
 
   constructor() {
@@ -14,12 +14,12 @@ export class EmailNotificationProvider extends NotificationProvider {
 
   initializeTransporter() {
     const emailConfig = {
-      host: 'smtp.gmail.com',
+      host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587', 10),
       secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
       auth: {
-        user: 'huyen.pham@asnet.com.vn',
-        pass: 'gxgmsxdygwslvhsk',
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD,
       },
     };
 
@@ -47,7 +47,7 @@ export class EmailNotificationProvider extends NotificationProvider {
     const formattedDate = dayjs(context.scheduled_at).format('MMMM D, YYYY [at] h:mm A');
 
     const mailOptions = {
-      from: 'H-Reminders<huyen.pham@asnet.com.vn>',
+      from: process.env.SMTP_FROM,
       to: context.user_email,
       subject: `⏰ Reminder: ${context.title}`,
       html: this.buildEmailTemplate(context, formattedDate),
@@ -93,6 +93,7 @@ export class EmailNotificationProvider extends NotificationProvider {
     }
     .container {
       background-color: #ffffff;
+      border: 1px solid #667eea;
       border-radius: 16px;
       overflow: hidden;
       box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -260,10 +261,7 @@ export class EmailNotificationProvider extends NotificationProvider {
   <div class="email-wrapper">
     <div class="container">
       <!-- Header -->
-      <div class="header">
-        <div class="icon-wrapper">
-          <div class="icon">⏰</div>
-        </div>
+      <div class="header"> 
         <h1 class="title">H-Reminders</h1>
         <p class="subtitle">You have an upcoming reminder</p>
       </div>
@@ -284,34 +282,19 @@ export class EmailNotificationProvider extends NotificationProvider {
           </div>
         </div>
         
-        <div class="divider"></div>
         
-        <!-- Additional Info -->
-        <div class="info-box">
-          <div class="info-title">Reminder Details</div>
-          <div class="info-content">
-            <strong>Recipient:</strong> ${context.user_name || context.user_email}<br>
-            <strong>Status:</strong> <span style="color: #48bb78;">●</span> Active
-          </div>
-        </div>
       </div>
       
       <!-- Footer -->
       <div class="footer">
         <p class="footer-text">
           This is an automated reminder notification from<br>
-          <a href="#" class="footer-brand">Reminders App</a>
+          <a href="#" class="footer-brand">H-Reminders</a>
         </p>
         <p class="footer-text" style="font-size: 12px; color: #a0aec0;">
           You're receiving this because you set up a reminder in your account.
         </p>
-        <div class="footer-links">
-          <a href="#" class="footer-link">Manage Reminders</a>
-          <span style="color: #e2e8f0;">•</span>
-          <a href="#" class="footer-link">Settings</a>
-          <span style="color: #e2e8f0;">•</span>
-          <a href="#" class="footer-link">Help</a>
-        </div>
+     
       </div>
     </div>
   </div>
