@@ -2,7 +2,10 @@ import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import 'reflect-metadata';
+import { clerkMiddleware } from '@clerk/express';
 import { HTTP_STATUS_CODES } from '@/constants/http';
+import userRoutes from '@/modules/users/user.routes';
+import reminderRoutes from '@/modules/reminders/reminder.routes';
 
 const app: Application = express();
 
@@ -12,7 +15,7 @@ app.use(helmet());
 // CORS configuration
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
     credentials: true,
   })
 );
@@ -21,7 +24,10 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check endpoint
+// Clerk middleware - must be before routes
+app.use(clerkMiddleware());
+
+// Health check endpoint (no auth required)
 app.get('/health', (_req: Request, res: Response) => {
   res.status(HTTP_STATUS_CODES.OK).json({
     status: 'success',
@@ -30,7 +36,10 @@ app.get('/health', (_req: Request, res: Response) => {
   });
 });
 
-// TODO: Add all routes here
+// API routes - all protected by Clerk JWT
+const API_VERSION = process.env.API_VERSION || 'v1';
+app.use(`/api/${API_VERSION}/users`, userRoutes);
+app.use(`/api/${API_VERSION}/reminders`, reminderRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

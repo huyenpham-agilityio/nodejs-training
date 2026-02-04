@@ -119,7 +119,7 @@ curl -X POST http://localhost:3000/api/v1/reminders \
 | PORT        | Server port         | 3000                  |
 | NODE_ENV    | Environment mode    | development           |
 | API_VERSION | API version         | v1                    |
-| CORS_ORIGIN | Allowed CORS origin | http://localhost:5173 |
+| CORS_ORIGIN | Allowed CORS origin | http://localhost:3000 |
 
 ## Next Steps
 
