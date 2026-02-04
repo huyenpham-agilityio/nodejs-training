@@ -5,8 +5,10 @@ import 'reflect-metadata';
 import { clerkMiddleware } from '@clerk/express';
 import dayjs from 'dayjs';
 import swaggerUi from 'swagger-ui-express';
+import morgan from 'morgan';
 
 import swaggerSpec from '@/configs/swagger';
+import { morganStream } from '@/configs/logger';
 
 import { HTTP_STATUS_CODES } from '@/constants/http';
 import { MESSAGES } from '@/constants/messages';
@@ -18,6 +20,14 @@ const app: Application = express();
 
 // Security middleware
 app.use(helmet());
+
+// HTTP request logging with Morgan
+const isDevelopment = process.env.NODE_ENV !== 'production';
+app.use(
+  morgan(isDevelopment ? 'dev' : 'combined', {
+    stream: morganStream,
+  })
+);
 
 // CORS configuration
 app.use(

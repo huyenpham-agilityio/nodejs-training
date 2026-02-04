@@ -3,6 +3,7 @@ import { User } from './entities/User.entity';
 import { clerkClient } from '@clerk/express';
 import { MESSAGES } from '@/constants/messages';
 import { UpdateNotificationPreferences } from './user.types';
+import logger from '@/configs/logger';
 
 /**
  * User Service
@@ -43,12 +44,12 @@ export class UserService {
 
       return user;
     } catch (error) {
-      console.error('Error in findOrCreateByClerkId:', error);
+      logger.error('Error in findOrCreateByClerkId:', error);
 
       // More detailed error logging
       if (error instanceof Error) {
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
+        logger.error('Error message:', error.message);
+        logger.error('Error stack:', error.stack);
       }
 
       throw new Error(

@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import AppDataSource from '@/configs/database';
 import { Reminder } from '@/modules/reminders/entities/Reminder.entity';
 import { User } from '@/modules/users/entities/User.entity';
+import logger from '@/configs/logger';
 
 /**
  * Clear all reminders for a specific user
@@ -9,12 +10,12 @@ import { User } from '@/modules/users/entities/User.entity';
  */
 
 async function clearReminders(clerkUserId?: string): Promise<void> {
-  console.log('🗑️  Starting reminder cleanup process...');
+  logger.info('🗑️  Starting reminder cleanup process...');
 
   try {
     // Initialize database connection
     await AppDataSource.initialize();
-    console.log('✅ Database connection established');
+    logger.info('✅ Database connection established');
 
     const reminderRepository = AppDataSource.getRepository(Reminder);
     const userRepository = AppDataSource.getRepository(User);
@@ -26,7 +27,7 @@ async function clearReminders(clerkUserId?: string): Promise<void> {
       });
 
       if (!user) {
-        console.log(`❌ User not found: ${clerkUserId}`);
+        logger.info(`❌ User not found: ${clerkUserId}`);
         return;
       }
 
@@ -36,21 +37,21 @@ async function clearReminders(clerkUserId?: string): Promise<void> {
 
       await reminderRepository.delete({ user: { id: user.id } });
 
-      console.log(`✅ Deleted ${count} reminders for user: ${user.name} (${user.email})`);
+      logger.info(`✅ Deleted ${count} reminders for user: ${user.name} (${user.email})`);
     } else {
       // Clear all reminders (use with caution!)
       const count = await reminderRepository.count();
       await reminderRepository.clear();
-      console.log(`✅ Deleted all ${count} reminders from the database`);
+      logger.info(`✅ Deleted all ${count} reminders from the database`);
     }
   } catch (error) {
-    console.error('❌ Error clearing reminders:', error);
+    logger.error('❌ Error clearing reminders:', error);
     throw error;
   } finally {
     // Close database connection
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy();
-      console.log('🔌 Database connection closed');
+      logger.info('🔌 Database connection closed');
     }
   }
 }
@@ -60,22 +61,22 @@ const main = async () => {
   const args = process.argv.slice(2);
   const clerkUserId = args[0];
 
-  console.log('\n🗑️  Reminder Cleanup Script');
-  console.log('=========================\n');
+  logger.info('\n🗑️  Reminder Cleanup Script');
+  logger.info('=========================\n');
 
   if (!clerkUserId) {
-    console.log('⚠️  Warning: No user ID provided. This will delete ALL reminders!');
-    console.log('Usage: npm run clear-reminders <clerkUserId>');
-    console.log('Or: npm run clear-reminders (to delete all)\n');
+    logger.info('⚠️  Warning: No user ID provided. This will delete ALL reminders!');
+    logger.info('Usage: npm run clear-reminders <clerkUserId>');
+    logger.info('Or: npm run clear-reminders (to delete all)\n');
   }
 
   await clearReminders(clerkUserId);
 
-  console.log('\n✅ Cleanup complete!\n');
+  logger.info('\n✅ Cleanup complete!\n');
   process.exit(0);
 };
 
 main().catch((error) => {
-  console.error('Fatal error:', error);
+  logger.error('Fatal error:', error);
   process.exit(1);
 });

@@ -1,6 +1,7 @@
 import { NotificationProvider } from './notification.provider';
 import { NotificationContext, NotificationProviderType } from '../notification.types';
 import dayjs from 'dayjs';
+import logger from '@/configs/logger';
 
 export class ConsoleNotificationProvider extends NotificationProvider {
   name = NotificationProviderType.CONSOLE;
@@ -8,13 +9,13 @@ export class ConsoleNotificationProvider extends NotificationProvider {
   async send(context: NotificationContext): Promise<void> {
     this.log('info', '\n ===== CONSOLE NOTIFICATION =====');
 
-    console.log(`Reminder ID: ${context.reminder_id}`);
-    console.log(`User: ${context.user_email}`);
-    console.log(`Title: ${context.title}`);
-    console.log(`Scheduled time: ${dayjs(context.scheduled_at).format('YYYY-MM-DD HH:mm:ss')}`);
+    logger.info(`Reminder ID: ${context.reminder_id}`);
+    logger.info(`User: ${context.user_email}`);
+    logger.info(`Title: ${context.title}`);
+    logger.info(`Scheduled time: ${dayjs(context.scheduled_at).format('YYYY-MM-DD HH:mm:ss')}`);
 
     if (context.description) {
-      console.log(`Description: ${context.description}`);
+      logger.info(`Description: ${context.description}`);
     }
 
     this.log('info', '===== END OF NOTIFICATION =====\n');

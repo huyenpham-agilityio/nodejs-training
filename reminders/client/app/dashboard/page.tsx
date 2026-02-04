@@ -63,20 +63,15 @@ export default function DashboardPage() {
       try {
         const token = await getToken();
         if (!token) {
-          console.error("No token available");
           return;
         }
 
-        console.log("Syncing user with backend...");
-        const userData = await userApi.getUserProfile(token);
-        console.log("User synced successfully:", userData);
+        // Sync user profile
+        await userApi.getUserProfile(token);
       } catch (error) {
-        console.error("Error syncing user:", error);
-
         // Log more details
         if (error instanceof Error) {
           console.error("Error message:", error.message);
-          console.error("Error stack:", error.stack);
         }
       }
     };
