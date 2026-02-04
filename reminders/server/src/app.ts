@@ -6,6 +6,7 @@ import { clerkMiddleware } from '@clerk/express';
 import { HTTP_STATUS_CODES } from '@/constants/http';
 import userRoutes from '@/modules/users/user.routes';
 import reminderRoutes from '@/modules/reminders/reminder.routes';
+import dayjs from 'dayjs';
 
 const app: Application = express();
 
@@ -34,7 +35,7 @@ app.get('/health', (_req: Request, res: Response) => {
   res.status(HTTP_STATUS_CODES.OK).json({
     status: 'success',
     message: 'Server is healthy',
-    timestamp: new Date().toISOString(),
+    timestamp: dayjs().toISOString(),
   });
 });
 

@@ -4,14 +4,14 @@ interface StatsCardsProps {
   total: number;
   active: number;
   completed: number;
-  overdue: number;
+  cancelled: number;
 }
 
 export default function StatsCards({
   total,
   active,
   completed,
-  overdue,
+  cancelled,
 }: StatsCardsProps) {
   return (
     <div className='grid grid-cols-1 md:grid-cols-4 gap-4 mb-8'>
@@ -90,12 +90,12 @@ export default function StatsCards({
         </div>
       </div>
 
-      {/* Overdue Card */}
+      {/* cancelled Card */}
       <div className='bg-gray-900 border border-gray-800 rounded-lg shadow-lg p-6 hover:border-red-500/50 transition-colors'>
         <div className='flex items-center justify-between'>
           <div>
-            <p className='text-sm text-gray-400'>Overdue</p>
-            <p className='text-3xl font-bold text-red-400'>{overdue}</p>
+            <p className='text-sm text-gray-400'>cancelled</p>
+            <p className='text-3xl font-bold text-red-400'>{cancelled}</p>
           </div>
           <div className='text-4xl bg-red-500/10 p-3 rounded-xl'>
             <svg

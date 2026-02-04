@@ -13,7 +13,6 @@ export interface UpdateReminderDTO {
   description?: string;
   scheduled_at?: Date | string;
   status?: string;
-  is_completed?: boolean;
 }
 
 export interface ReminderResponseDTO {
@@ -22,7 +21,6 @@ export interface ReminderResponseDTO {
   description: string;
   scheduled_at: Date;
   status: string;
-  is_completed: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -31,5 +29,5 @@ export interface ReminderStatsDTO {
   total: number;
   active: number;
   completed: number;
-  overdue: number;
+  cancelled: number;
 }

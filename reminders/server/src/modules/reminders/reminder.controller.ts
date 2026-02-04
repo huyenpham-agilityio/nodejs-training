@@ -62,7 +62,7 @@ export class ReminderController {
         return;
       }
 
-      const reminder = await this.reminderService.findById(Number(id), userId);
+      const reminder = await this.reminderService.findById(Number(id));
 
       res.status(HTTP_STATUS_CODES.OK).json({
         status: 'success',
@@ -100,7 +100,7 @@ export class ReminderController {
         return;
       }
 
-      const reminder = await reminderService.create(userId, req.body);
+      const reminder = await this.reminderService.create(userId, req.body);
 
       res.status(HTTP_STATUS_CODES.CREATED).json({
         status: 'success',
@@ -139,7 +139,7 @@ export class ReminderController {
         return;
       }
 
-      const reminder = await reminderService.update(Number(id), userId, req.body);
+      const reminder = await this.reminderService.update(Number(id), req.body);
 
       res.status(HTTP_STATUS_CODES.OK).json({
         status: 'success',
@@ -178,7 +178,7 @@ export class ReminderController {
         return;
       }
 
-      await reminderService.delete(Number(id), userId);
+      await this.reminderService.delete(Number(id));
 
       res.status(HTTP_STATUS_CODES.OK).json({
         status: 'success',
@@ -193,46 +193,6 @@ export class ReminderController {
         : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 
       console.error('Error deleting reminder:', error);
-      res.status(statusCode).json({
-        status: 'error',
-        message: errorMessage,
-      });
-    }
-  };
-
-  /**
-   * Toggle reminder completion
-   * @route PATCH /api/v1/reminders/:id/toggle
-   */
-  toggleComplete = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const userId = req.auth?.userId;
-      const { id } = req.params;
-
-      if (!userId) {
-        res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
-          status: 'error',
-          message: 'Unauthorized',
-        });
-        return;
-      }
-
-      const reminder = await reminderService.toggleComplete(Number(id), userId);
-
-      res.status(HTTP_STATUS_CODES.OK).json({
-        status: 'success',
-        data: {
-          reminder,
-        },
-      });
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to toggle reminder completion';
-      const statusCode = errorMessage.includes('not found')
-        ? HTTP_STATUS_CODES.NOT_FOUND
-        : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
-
-      console.error('Error toggling reminder:', error);
       res.status(statusCode).json({
         status: 'error',
         message: errorMessage,
@@ -256,7 +216,7 @@ export class ReminderController {
         return;
       }
 
-      const stats = await reminderService.getStats(userId);
+      const stats = await this.reminderService.getStats(userId);
 
       res.status(HTTP_STATUS_CODES.OK).json({
         status: 'success',

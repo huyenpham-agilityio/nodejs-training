@@ -7,7 +7,7 @@ interface Reminder {
   title: string;
   description?: string;
   scheduled_at: string;
-  is_completed: boolean;
+  status?: string;
 }
 
 interface ReminderListProps {

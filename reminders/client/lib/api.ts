@@ -8,7 +8,6 @@ export interface Reminder {
   description?: string;
   scheduled_at: string;
   status?: string;
-  is_completed: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -23,7 +22,6 @@ export interface UpdateReminderData {
   title?: string;
   description?: string;
   scheduled_at?: string;
-  is_completed?: boolean;
 }
 
 export interface User {
@@ -43,7 +41,10 @@ export interface UpdateUserData {
 }
 
 class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
     super(message);
     this.name = "ApiError";
   }
@@ -52,7 +53,7 @@ class ApiError extends Error {
 async function fetchWithAuth(
   endpoint: string,
   token: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ) {
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
@@ -99,7 +100,7 @@ export const reminderApi = {
   async update(
     token: string,
     id: number,
-    updates: UpdateReminderData
+    updates: UpdateReminderData,
   ): Promise<Reminder> {
     const data = await fetchWithAuth(`/reminders/${id}`, token, {
       method: "PUT",
@@ -121,7 +122,7 @@ export const reminderApi = {
     total: number;
     active: number;
     completed: number;
-    overdue: number;
+    cancelled: number;
   }> {
     const data = await fetchWithAuth("/reminders/stats", token);
     return data.data?.stats || data.data;
