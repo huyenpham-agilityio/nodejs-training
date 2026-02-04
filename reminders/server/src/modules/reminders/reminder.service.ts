@@ -32,10 +32,14 @@ export class ReminderService {
     this.reminderRepository = reminderRepository;
   }
   /**
-   * Get all reminders for a user
+   * Get all reminders for a user with optional filters
    */
-  async findByUserId(userId: string): Promise<Reminder[]> {
-    return this.reminderRepository.findByUserId(userId);
+  async findByUserId(
+    userId: string,
+    search?: string,
+    status?: 'active' | 'completed'
+  ): Promise<Reminder[]> {
+    return this.reminderRepository.findByUserId(userId, search, status);
   }
 
   /**
@@ -188,7 +192,6 @@ export class ReminderService {
     total: number;
     active: number;
     completed: number;
-    cancelled: number;
   }> {
     return this.reminderRepository.getStatsByUserId(userId);
   }

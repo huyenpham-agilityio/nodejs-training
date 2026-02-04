@@ -15,17 +15,40 @@ export class ReminderRepository {
   }
 
   /**
-   * Find all reminders for a specific user
+   * Find all reminders for a specific user with optional filters
+   * If no filters provided, returns all reminders
    */
-  findByUserId = async (userId: string): Promise<Reminder[]> => {
-    return this.repository.find({
-      where: { user: { clerk_user_id: userId } },
-      relations: ['user'],
-      order: {
-        scheduled_at: 'ASC',
-        created_at: 'DESC',
-      },
-    });
+  findByUserId = async (
+    userId: string,
+    search?: string,
+    status?: 'active' | 'completed'
+  ): Promise<Reminder[]> => {
+    const queryBuilder = this.repository
+      .createQueryBuilder('reminder')
+      .leftJoinAndSelect('reminder.user', 'user')
+      .where('user.clerk_user_id = :userId', { userId });
+
+    // Apply status filter if provided
+    if (status === 'active') {
+      queryBuilder.andWhere('reminder.status = :status', { status: ReminderStatus.PENDING });
+    } else if (status === 'completed') {
+      queryBuilder.andWhere('reminder.status = :status', { status: ReminderStatus.NOTIFIED });
+    }
+
+    // Apply search filter if provided
+    if (search && search.trim()) {
+      queryBuilder.andWhere('(reminder.title LIKE :search OR reminder.description LIKE :search)', {
+        search: `%${search}%`,
+      });
+    }
+
+    // Order by status, scheduled_at, and created_at
+    queryBuilder
+      .orderBy('reminder.status', 'ASC') // PENDING first
+      .addOrderBy('reminder.scheduled_at', 'ASC')
+      .addOrderBy('reminder.created_at', 'DESC');
+
+    return queryBuilder.getMany();
   };
 
   /**
@@ -83,7 +106,6 @@ export class ReminderRepository {
     total: number;
     active: number;
     completed: number;
-    cancelled: number;
   }> => {
     const reminders = await this.findByUserId(userId);
 
@@ -91,7 +113,6 @@ export class ReminderRepository {
       total: reminders.length,
       active: reminders.filter((r) => r.status === ReminderStatus.PENDING).length,
       completed: reminders.filter((r) => r.status === ReminderStatus.NOTIFIED).length,
-      cancelled: reminders.filter((r) => r.status === ReminderStatus.CANCELLED).length,
     };
   };
 }
