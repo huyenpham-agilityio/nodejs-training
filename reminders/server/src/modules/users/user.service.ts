@@ -28,16 +28,30 @@ export class UserService {
     try {
       const clerkUser = await clerkClient.users.getUser(clerkUserId);
 
+      const email = clerkUser.emailAddresses[0]?.emailAddress;
+      if (!email) {
+        throw new Error('User email not found in Clerk');
+      }
+
       user = await this.userRepository.create({
         clerk_user_id: clerkUserId,
-        email: clerkUser.emailAddresses[0]?.emailAddress || '',
+        email: email,
         name: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'User',
       });
 
       return user;
     } catch (error) {
-      console.error('Error fetching user from Clerk:', error);
-      throw new Error('Failed to fetch user information');
+      console.error('Error in findOrCreateByClerkId:', error);
+
+      // More detailed error logging
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
+
+      throw new Error(
+        `Failed to fetch user information: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 

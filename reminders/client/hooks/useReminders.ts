@@ -26,11 +26,6 @@ export function useReminders({
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<{
-    total: number;
-    active: number;
-    completed: number;
-  }>({ total: 0, active: 0, completed: 0 });
 
   // Fetch reminders from API with filters
   const fetchReminders = useCallback(async () => {
@@ -46,9 +41,6 @@ export function useReminders({
 
       const data = await reminderApi.getAll(token, searchParam, statusParam);
       setReminders(data);
-
-      const currentStats = await reminderApi.getStats(token);
-      setStats(currentStats);
     } catch (err) {
       console.error("Error fetching reminders:", err);
       setError(
@@ -147,7 +139,6 @@ export function useReminders({
   return {
     reminders,
     sortedReminders,
-    stats,
     filter,
     setFilter,
     searchQuery,

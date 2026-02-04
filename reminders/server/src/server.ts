@@ -5,6 +5,7 @@ import AppDataSource from './configs/database';
 import { redisClient } from './configs/redis';
 // Import worker to initialize it
 import { notificationWorker } from './modules/notifications/workers/notification.worker';
+import providerFactory from './modules/notifications/providers/provider.factory';
 
 // Load environment variables
 dotenv.config();
@@ -31,6 +32,14 @@ const startServer = async () => {
 
     // Test Redis connection
     await redisClient.ping();
+
+    // Log notification providers status
+    const providers = providerFactory.getAllProviders();
+    console.log('\n📬 Notification Providers:');
+    providers.forEach((provider) => {
+      const status = provider.isConfigured() ? '✅ Enabled' : '⚠️  Disabled (not configured)';
+      console.log(`  ${status} - ${provider.name}`);
+    });
 
     // Start Express server
     app.listen(PORT, () => {

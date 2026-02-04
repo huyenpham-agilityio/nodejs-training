@@ -108,25 +108,27 @@ export default function ReminderCard({
 
         {/* Actions */}
         <div className='flex gap-1.5 ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200'>
-          <button
-            onClick={() => onEdit(reminder)}
-            className='p-2.5 text-gray-500 hover:text-indigo-400 hover:bg-indigo-900/50 rounded-xl transition-all duration-200 hover:scale-110'
-            title='Edit reminder'
-          >
-            <svg
-              className='w-5 h-5'
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
+          {!isCompleted && (
+            <button
+              onClick={() => onEdit(reminder)}
+              className='p-2.5 text-gray-500 hover:text-indigo-400 hover:bg-indigo-900/50 rounded-xl transition-all duration-200 hover:scale-110'
+              title='Edit reminder'
             >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
-              />
-            </svg>
-          </button>
+              <svg
+                className='w-5 h-5'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
+                />
+              </svg>
+            </button>
+          )}
           <button
             onClick={() => onDelete(reminder.id)}
             className='p-2.5 text-gray-500 hover:text-red-400 hover:bg-red-900/50 rounded-xl transition-all duration-200 hover:scale-110'

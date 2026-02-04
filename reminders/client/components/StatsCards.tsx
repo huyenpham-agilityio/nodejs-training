@@ -1,16 +1,51 @@
 "use client";
 
-interface StatsCardsProps {
+import { memo, useState, useEffect, useCallback } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { reminderApi } from "@/lib/api";
+
+interface Stats {
   total: number;
   active: number;
   completed: number;
 }
 
-export default function StatsCards({
-  total,
-  active,
-  completed,
-}: StatsCardsProps) {
+function StatsCards() {
+  const { getToken } = useAuth();
+  const [stats, setStats] = useState<Stats>({
+    total: 0,
+    active: 0,
+    completed: 0,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const currentStats = await reminderApi.getStats(token);
+      setStats(currentStats);
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getToken]);
+
+  useEffect(() => {
+    fetchStats();
+
+    // Refresh stats every 30 seconds
+    // const interval = setInterval(fetchStats, 30000);
+
+    // return () => clearInterval(interval);
+  }, [fetchStats]);
+
+  // Show loading skeleton or zeros while loading
+  const { total, active, completed } = isLoading
+    ? { total: 0, active: 0, completed: 0 }
+    : stats;
   return (
     <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-8'>
       {/* Total Card */}
@@ -90,3 +125,5 @@ export default function StatsCards({
     </div>
   );
 }
+
+export default memo(StatsCards);

@@ -24,7 +24,7 @@ export class UserController {
       if (!userId) {
         res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
           status: 'error',
-          message: 'Unauthorized',
+          message: 'Unauthorized - No user ID provided',
         });
         return;
       }
@@ -40,9 +40,12 @@ export class UserController {
       });
     } catch (error) {
       console.error('Error fetching user profile:', error);
+
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch user profile';
+
       res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
         status: 'error',
-        message: 'Failed to fetch user profile',
+        message: errorMessage,
       });
     }
   };
