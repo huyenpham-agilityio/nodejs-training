@@ -29,7 +29,7 @@ function StatsCards(
   { onStatsChange }: StatsCardsProps,
   ref: React.Ref<StatsCardsRef>,
 ) {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   const [stats, setStats] = useState<Stats>({
     total: 0,
     active: 0,
@@ -38,6 +38,13 @@ function StatsCards(
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchStats = useCallback(async () => {
+    // Wait for Clerk to load before fetching
+    if (!isLoaded) return;
+    if (!isSignedIn) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const token = await getToken();
       if (!token) return;
@@ -50,7 +57,7 @@ function StatsCards(
     } finally {
       setIsLoading(false);
     }
-  }, [getToken, onStatsChange]);
+  }, [getToken, isLoaded, isSignedIn, onStatsChange]);
 
   // Expose refetchStats to parent component
   useImperativeHandle(

@@ -28,10 +28,11 @@ export function useReminders({
   initialLimit = 10,
   onRemindersChange,
 }: UseRemindersProps = {}) {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   const [reminders, setReminders] = useState<Reminder[]>(initialReminders);
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,8 +41,26 @@ export function useReminders({
   const [limit, setLimit] = useState(initialLimit);
   const [pagination, setPagination] = useState<PaginationMetadata | null>(null);
 
+  // Debounce search query - wait 500ms after user stops typing
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
+
   // Fetch reminders from API with filters
   const fetchReminders = useCallback(async () => {
+    // Wait for Clerk to load before fetching
+    if (!isLoaded) return;
+    if (!isSignedIn) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -50,7 +69,7 @@ export function useReminders({
 
       // Pass filter and search to API for server-side filtering
       const statusParam = filter === "all" ? undefined : filter;
-      const searchParam = searchQuery.trim() || undefined;
+      const searchParam = debouncedSearchQuery.trim() || undefined;
 
       if (enablePagination) {
         const result = await reminderApi.getAllPaginated(
@@ -75,7 +94,16 @@ export function useReminders({
     } finally {
       setIsLoading(false);
     }
-  }, [getToken, filter, searchQuery, enablePagination, page, limit]);
+  }, [
+    getToken,
+    isLoaded,
+    isSignedIn,
+    filter,
+    debouncedSearchQuery,
+    enablePagination,
+    page,
+    limit,
+  ]);
 
   // Reset to page 1 when filters or search changes (only in pagination mode)
   useEffect(() => {
@@ -83,7 +111,7 @@ export function useReminders({
       setPage(1);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, searchQuery, enablePagination]);
+  }, [filter, debouncedSearchQuery, enablePagination]);
 
   // Fetch reminders on mount and when filters change
   useEffect(() => {
