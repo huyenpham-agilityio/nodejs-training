@@ -44,7 +44,7 @@ export class Reminder {
   updated_at: Date;
 
   // Relationships
-  @ManyToOne(() => User, (user) => user.reminders, { cascade: true })
+  @ManyToOne(() => User, (user) => user.reminders, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
 }
