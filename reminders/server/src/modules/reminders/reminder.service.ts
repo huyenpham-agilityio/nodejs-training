@@ -65,11 +65,16 @@ export class ReminderService {
    * Get a specific reminder by ID
    * Throws error if not found or doesn't belong to user
    */
-  findById = async (id: number): Promise<Reminder> => {
+  findById = async (id: number, userId?: string): Promise<Reminder> => {
     const reminder = await this.reminderRepository.findByIdWithUser(id);
 
     if (!reminder) {
       throw new Error(MESSAGES.REMINDER_NOT_FOUND);
+    }
+
+    // Verify ownership if userId is provided
+    if (userId && reminder.user.clerk_user_id !== userId) {
+      throw new Error(MESSAGES.REMINDER_NOT_FOUND); // Don't expose that it exists
     }
 
     return reminder;
@@ -124,10 +129,10 @@ export class ReminderService {
   /**
    * Update a reminder
    */
-  update = async (id: number, reminderData: UpdateReminder): Promise<Reminder> => {
+  update = async (id: number, userId: string, reminderData: UpdateReminder): Promise<Reminder> => {
     try {
-      // Verify reminder exists
-      const existing = await this.findById(id);
+      // Verify reminder exists and belongs to user
+      const existing = await this.findById(id, userId);
 
       // Prepare update data
       const updateData: Partial<Reminder> = {};
@@ -181,10 +186,10 @@ export class ReminderService {
   /**
    * Delete a reminder
    */
-  delete = async (id: number): Promise<void> => {
+  delete = async (id: number, userId: string): Promise<void> => {
     try {
-      // Verify reminder exists
-      const reminder = await this.findById(id);
+      // Verify reminder exists and belongs to user
+      const reminder = await this.findById(id, userId);
 
       // Cancel scheduled notification job
       await cancelNotificationJob(id);

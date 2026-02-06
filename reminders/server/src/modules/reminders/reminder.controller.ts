@@ -148,7 +148,7 @@ export class ReminderController {
         return;
       }
 
-      const reminder = await this.reminderService.findById(reminderId);
+      const reminder = await this.reminderService.findById(reminderId, userId);
 
       res.status(HTTP_STATUS_CODES.OK).json({
         status: STATUS.SUCCESS,
@@ -363,7 +363,7 @@ export class ReminderController {
       if (description !== undefined) updateData.description = description.trim();
       if (scheduledDate !== undefined) updateData.scheduled_at = scheduledDate;
 
-      const reminder = await this.reminderService.update(reminderId, updateData);
+      const reminder = await this.reminderService.update(reminderId, userId, updateData);
 
       res.status(HTTP_STATUS_CODES.OK).json({
         status: STATUS.SUCCESS,
@@ -414,7 +414,7 @@ export class ReminderController {
         return;
       }
 
-      await this.reminderService.delete(reminderId);
+      await this.reminderService.delete(reminderId, userId);
 
       res.status(HTTP_STATUS_CODES.OK).json({
         status: STATUS.SUCCESS,
