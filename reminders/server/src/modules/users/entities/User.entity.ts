@@ -38,6 +38,6 @@ export class User {
   updated_at: Date;
 
   // Relationships
-  @OneToMany(() => Reminder, (reminder) => reminder.user, { cascade: true })
+  @OneToMany(() => Reminder, (reminder) => reminder.user)
   reminders: Reminder[];
 }
