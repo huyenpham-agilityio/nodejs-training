@@ -150,6 +150,13 @@ export class ReminderRepository {
     });
   };
 
+  markAsCancelled = async (id: number): Promise<Reminder | null> => {
+    return await this.update(id, {
+      status: ReminderStatus.CANCELLED,
+      updated_at: dayjs().toDate(),
+    });
+  };
+
   /**
    * Get statistics for a user
    */

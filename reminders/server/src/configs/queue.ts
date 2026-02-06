@@ -3,6 +3,14 @@ import { redisConfig } from './redis';
 import { NotificationJobData } from '@/modules/notifications/notification.types';
 import dayjs from 'dayjs';
 import logger from './logger';
+import {
+  MAX_JOB_ATTEMPTS,
+  JOB_BACKOFF_DELAY,
+  COMPLETED_JOBS_RETENTION_COUNT,
+  COMPLETED_JOBS_RETENTION_AGE,
+  FAILED_JOBS_RETENTION_COUNT,
+  FAILED_JOBS_RETENTION_AGE,
+} from '@/constants/time';
 
 const queuePrefix = process.env.BULLMQ_PREFIX || 'reminders';
 
@@ -21,18 +29,18 @@ export const defaultQueueOptions: QueueOptions = {
   connection: queueConnection,
   prefix: queuePrefix,
   defaultJobOptions: {
-    attempts: 3,
+    attempts: MAX_JOB_ATTEMPTS,
     backoff: {
       type: 'exponential',
-      delay: 1000,
+      delay: JOB_BACKOFF_DELAY,
     },
     removeOnComplete: {
-      count: 100,
-      age: 24 * 3600, // keep completed jobs for 24 hours
+      count: COMPLETED_JOBS_RETENTION_COUNT,
+      age: COMPLETED_JOBS_RETENTION_AGE,
     },
     removeOnFail: {
-      count: 1000,
-      age: 7 * 24 * 3600, // keep failed jobs for 7 days
+      count: FAILED_JOBS_RETENTION_COUNT,
+      age: FAILED_JOBS_RETENTION_AGE,
     },
   },
 };
@@ -78,12 +86,15 @@ export const rescheduleNotificationJob = async (
   logger.info(`Rescheduled notification job for reminder ID ${data.reminder_id}`);
 };
 
+// Queue Event Listeners
 notificationQueue.on('error', (error) => {
   logger.error('Notification Queue Error:', error);
 });
 
-notificationQueue.on('waiting', (jobId) => {
-  logger.debug(`Job ${jobId} is waiting to be processed`);
+notificationQueue.on('waiting', (job) => {
+  console.log('Waiting job:', job.id);
+
+  logger.debug(`Job ${job.id} is waiting to be processed`);
 });
 
 // Log when queue is ready
