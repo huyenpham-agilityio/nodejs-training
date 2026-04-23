@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1.4
-
 ARG NODE_VERSION=20.19.3
 
 ################################################################################
@@ -21,17 +19,15 @@ CMD ["npm", "run", "dev"]
 # Production deps stage
 FROM base AS deps
 ENV HUSKY=0
-RUN --mount=type=bind,source=package.json,target=package.json \
-    --mount=type=bind,source=package-lock.json,target=package-lock.json \
-    npm ci --omit=dev
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
 
 ################################################################################
 # Build stage
-FROM deps AS build
+FROM base AS build
 ENV HUSKY=0
-RUN --mount=type=bind,source=package.json,target=package.json \
-    --mount=type=bind,source=package-lock.json,target=package-lock.json \
-    npm ci
+COPY package.json package-lock.json ./
+RUN npm ci
 COPY . .
 RUN npm run build
 
