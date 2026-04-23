@@ -34,6 +34,7 @@ RUN npm run build
 # Final production stage
 FROM base AS final
 ENV NODE_ENV=production
+RUN mkdir -p /usr/src/app/logs && chown -R node:node /usr/src/app
 USER node
 COPY package.json .
 COPY --from=deps /usr/src/app/node_modules ./node_modules
