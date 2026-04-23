@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1.4
 
 ARG NODE_VERSION=20.19.3
 
@@ -8,12 +8,12 @@ FROM node:${NODE_VERSION}-alpine AS base
 WORKDIR /usr/src/app
 
 ################################################################################
-# Development stage - installs all deps, uses ts-node-dev for hot reload
+# Development stage
 FROM base AS development
 ENV NODE_ENV=development
 ENV HUSKY=0
 COPY package.json package-lock.json ./
-RUN --mount=type=cache,target=/root/.npm \
+RUN --mount=type=cache,id=npm-cache,target=/root/.npm \
     npm ci
 EXPOSE 8080
 CMD ["npm", "run", "dev"]
@@ -24,7 +24,7 @@ FROM base AS deps
 ENV HUSKY=0
 RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=package-lock.json,target=package-lock.json \
-    --mount=type=cache,target=/root/.npm \
+    --mount=type=cache,id=npm-cache,target=/root/.npm \
     npm ci --omit=dev
 
 ################################################################################
@@ -33,7 +33,7 @@ FROM deps AS build
 ENV HUSKY=0
 RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=package-lock.json,target=package-lock.json \
-    --mount=type=cache,target=/root/.npm \
+    --mount=type=cache,id=npm-cache,target=/root/.npm \
     npm ci
 COPY . .
 RUN npm run build
@@ -47,4 +47,4 @@ COPY package.json .
 COPY --from=deps /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/dist ./dist
 EXPOSE 8080
-CMD npm start
+CMD ["npm", "start"]

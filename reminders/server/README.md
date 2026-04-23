@@ -122,7 +122,7 @@ Start the development server with hot-reload:
 npm run dev
 ```
 
-The server will run on `http://localhost:3000`
+The server will run on `http://localhost:8080`
 
 ### 6. Build for Production
 
