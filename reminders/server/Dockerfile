@@ -18,9 +18,8 @@ CMD ["npm", "run", "dev"]
 ################################################################################
 # Production deps stage
 FROM base AS deps
-ENV HUSKY=0
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+RUN npm pkg delete scripts.prepare && npm ci --omit=dev
 
 ################################################################################
 # Build stage
