@@ -50,7 +50,8 @@ const startServer = async () => {
       logger.info('----------------------------------');
       logger.info(`✓ Server is running on port ${PORT}`);
       logger.info(`  Environment: ${process.env.NODE_ENV || 'development'}`);
-      logger.info(`  API URL: http://localhost:${PORT}/api/${process.env.API_VERSION || 'v1'}`);
+      const baseUrl = process.env.API_URL || `http://localhost:${PORT}`;
+      logger.info(`  API URL: ${baseUrl}/api/${process.env.API_VERSION || 'v1'}`);
       logger.info('----------------------------------');
     });
   } catch (error) {
