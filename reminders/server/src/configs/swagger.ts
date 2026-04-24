@@ -2,6 +2,13 @@ import swaggerJsdoc from 'swagger-jsdoc';
 
 const API_VERSION = process.env.API_VERSION || 'v1';
 const PORT = process.env.PORT || 8080;
+const isProduction = process.env.NODE_ENV === 'production';
+const srcBase = isProduction ? './dist' : './src';
+const srcExt = isProduction ? 'js' : 'ts';
+
+const servers = isProduction && process.env.API_URL
+  ? [{ url: `${process.env.API_URL}/api/${API_VERSION}`, description: 'Production server' }]
+  : [{ url: `http://localhost:${PORT}/api/${API_VERSION}`, description: 'Development server' }];
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -14,16 +21,7 @@ const options: swaggerJsdoc.Options = {
         name: 'API Support',
       },
     },
-    servers: [
-      {
-        url: `http://localhost:${PORT}/api/${API_VERSION}`,
-        description: 'Development server',
-      },
-      {
-        url: `${process.env.API_URL || 'https://api.example.com'}/api/${API_VERSION}`,
-        description: 'Production server',
-      },
-    ],
+    servers,
     components: {
       securitySchemes: {
         BearerAuth: {
@@ -280,7 +278,11 @@ const options: swaggerJsdoc.Options = {
       },
     ],
   },
-  apis: ['./src/modules/**/*.routes.ts', './src/modules/**/*.controller.ts', './src/app.ts'],
+  apis: [
+    `${srcBase}/modules/**/*.routes.${srcExt}`,
+    `${srcBase}/modules/**/*.controller.${srcExt}`,
+    `${srcBase}/app.${srcExt}`,
+  ],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
