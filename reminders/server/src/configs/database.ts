@@ -7,11 +7,13 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 // Create and export the DataSource instance
 const AppDataSource = new DataSource({
   type: 'postgres',
+  url: process.env.DATABASE_URL,
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432', 10),
   username: process.env.DB_USERNAME || 'admin',
   password: process.env.DB_PASSWORD || 'admin',
   database: process.env.DB_DATABASE || 'reminders_db',
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
   synchronize: isDevelopment,
   logging: false,
   entities: [User, Reminder],
