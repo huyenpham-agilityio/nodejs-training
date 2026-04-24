@@ -122,7 +122,7 @@ Start the development server with hot-reload:
 npm run dev
 ```
 
-The server will run on `http://localhost:3000`
+The server will run on `http://localhost:8080`
 
 ### 6. Build for Production
 
@@ -185,13 +185,13 @@ All authenticated requests require a Bearer token from Clerk:
 
 ```bash
 curl -H "Authorization: Bearer YOUR_CLERK_TOKEN" \
-  http://localhost:3000/api/v1/users/profile
+  http://localhost:8080/api/v1/users/profile
 ```
 
 #### Create a Reminder
 
 ```bash
-curl -X POST http://localhost:3000/api/v1/reminders \
+curl -X POST http://localhost:8080/api/v1/reminders \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_CLERK_TOKEN" \
   -d '{
@@ -205,7 +205,7 @@ curl -X POST http://localhost:3000/api/v1/reminders \
 #### Get Reminders with Filtering
 
 ```bash
-curl -X GET "http://localhost:3000/api/v1/reminders?status=active&page=1&limit=10" \
+curl -X GET "http://localhost:8080/api/v1/reminders?status=active&page=1&limit=10" \
   -H "Authorization: Bearer YOUR_CLERK_TOKEN"
 ```
 
